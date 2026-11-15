@@ -92,8 +92,8 @@
   }
   .btn:hover{color:var(--fg);border-color:var(--line2)}
   .btn[aria-pressed="true"]{color:var(--acc);border-color:var(--acc-dim)}
-  #viewBtn,#themeBtn{border-color:var(--line2)}
-  #viewBtn:hover,#themeBtn:hover{border-color:var(--acc-dim)}
+  #viewBtn,#shareBtn,#themeBtn{border-color:var(--line2)}
+  #viewBtn:hover,#shareBtn:hover,#themeBtn:hover{border-color:var(--acc-dim)}
   .controls__sp{flex:1}
   .search{position:relative;flex:1 1 210px;min-width:150px;height:var(--ctl);display:flex;align-items:center;gap:6px;border:1px solid var(--line2);padding:0 6px}
   .search:focus-within{border-color:var(--acc-dim)}
@@ -208,6 +208,22 @@
     letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--acc-dim);
   }
   .modal__link:hover{text-decoration:none;border-color:var(--acc)}
+  .share__body{display:block}
+  .share__section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .share__section:first-of-type{margin-top:14px;padding-top:0;border-top:0}
+  .share__h{margin:0 0 5px;color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .share__hint{margin:0;color:var(--faint);font-size:11.5px}
+  .share__code{
+    display:block;width:100%;height:74px;margin-top:8px;padding:8px;
+    border:1px solid var(--line2);background:var(--sel);color:var(--fg);
+    font:inherit;font-size:11px;line-height:1.5;resize:vertical;
+  }
+  .share__code:focus{border-color:var(--acc-dim);outline:none}
+  .share__row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .share__row .btn{border-color:var(--line2)}
+  .share__row .btn:hover{border-color:var(--acc-dim)}
+  .share__row .btn:disabled{opacity:.45;cursor:default;border-color:var(--line2)}
+  .share__status{margin:0;color:var(--faint);font-size:11px}
   @media(max-width:560px){
     .modal__body{grid-template-columns:1fr;gap:16px;padding:16px}
     .modal__poster{width:min(150px,45%)}
@@ -269,6 +285,7 @@
         <option value="time-desc">Runtime: longest</option>
       </select>
       <button class="btn" type="button" id="viewBtn">view: list</button>
+      <button class="btn" type="button" id="shareBtn">import / export</button>
       <button class="btn" type="button" id="themeBtn">theme: dark</button>
     </section>
 
@@ -292,6 +309,33 @@
       <p class="modal__desc" id="dialogDesc"></p>
       <a class="modal__link" id="dialogLink" href="#" target="_blank" rel="noopener noreferrer">View on Letterboxd ↗</a>
     </div>
+  </div>
+</dialog>
+
+<dialog class="modal share" id="shareDialog" aria-labelledby="shareTitle">
+  <div class="modal__body share__body">
+    <button class="modal__close" type="button" id="shareClose" aria-label="Close">×</button>
+    <h2 class="modal__title" id="shareTitle">Import / export</h2>
+
+    <section class="share__section">
+      <h3 class="share__h" id="exportLabel">Export</h3>
+      <p class="share__hint" id="exportHint"></p>
+      <textarea class="share__code" id="shareCode" readonly aria-labelledby="exportLabel" spellcheck="false"></textarea>
+      <div class="share__row">
+        <button class="btn" type="button" id="copyCodeBtn">copy code</button>
+        <p class="share__status" id="exportStatus" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="share__section">
+      <h3 class="share__h" id="importLabel">Import</h3>
+      <p class="share__hint">Paste a code. This replaces the checklist saved in this browser.</p>
+      <textarea class="share__code" id="importCode" aria-labelledby="importLabel" placeholder="WL1:…" spellcheck="false"></textarea>
+      <div class="share__row">
+        <button class="btn" type="button" id="importBtn" disabled>import</button>
+        <p class="share__status" id="importStatus" aria-live="polite"></p>
+      </div>
+    </section>
   </div>
 </dialog>
 
@@ -936,6 +980,88 @@
 
   document.getElementById("dialogClose").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", e => { if(e.target === dialog) dialog.close(); });
+
+  /* import / export */
+  const shareDialog = document.getElementById("shareDialog");
+  const shareCode = document.getElementById("shareCode");
+  const exportHint = document.getElementById("exportHint");
+  const exportStatus = document.getElementById("exportStatus");
+  const importCode = document.getElementById("importCode");
+  const importBtn = document.getElementById("importBtn");
+  const importStatus = document.getElementById("importStatus");
+  const CODE_PREFIX = "WL1:";
+
+  function encodeChecklist(){
+    const raw = FILMS.filter(f => watched.has(f.id)).map(f => f.id).join("|");
+    const b64 = btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return CODE_PREFIX + b64;
+  }
+
+  function decodeChecklist(code){
+    const s = String(code).replace(/\s+/g, "");
+    if(!s.startsWith(CODE_PREFIX)) return null;
+    const b64 = s.slice(CODE_PREFIX.length).replace(/-/g, "+").replace(/_/g, "/");
+    if(!b64) return [];
+    if(b64.length % 4 === 1) return null;
+    const pad = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    let raw;
+    try { raw = atob(pad); } catch (_) { return null; }
+    const valid = new Set(FILMS.map(f => f.id));
+    return raw ? [...new Set(raw.split("|").filter(id => valid.has(id)))] : [];
+  }
+
+  function showExport(){
+    shareCode.value = encodeChecklist();
+    exportHint.textContent = watched.size
+      ? "Your " + watched.size + (watched.size === 1 ? " checked film" : " checked films") +
+        ". Send this code to share the checklist."
+      : "No films checked yet — tick some films to create a code.";
+  }
+
+  function checkImport(){
+    const ids = decodeChecklist(importCode.value);
+    importBtn.disabled = !ids || !ids.length;
+    if(!importCode.value.trim()) importStatus.textContent = "";
+    else if(ids === null) importStatus.textContent = "That code isn't valid.";
+    else if(!ids.length) importStatus.textContent = "No checked films in that code.";
+    else importStatus.textContent = ids.length + (ids.length === 1 ? " film" : " films") + " in this code.";
+  }
+
+  document.getElementById("shareBtn").addEventListener("click", () => {
+    exportStatus.textContent = "";
+    importStatus.textContent = "";
+    importCode.value = "";
+    importBtn.disabled = true;
+    showExport();
+    shareDialog.showModal();
+  });
+
+  document.getElementById("shareClose").addEventListener("click", () => shareDialog.close());
+  shareDialog.addEventListener("click", e => { if(e.target === shareDialog) shareDialog.close(); });
+
+  document.getElementById("copyCodeBtn").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(shareCode.value);
+      exportStatus.textContent = "Copied.";
+    } catch (_) {
+      shareCode.focus();
+      shareCode.select();
+      try { document.execCommand("copy"); exportStatus.textContent = "Copied."; }
+      catch (__) { exportStatus.textContent = "Select the code and copy it."; }
+    }
+  });
+
+  importCode.addEventListener("input", checkImport);
+  importBtn.addEventListener("click", () => {
+    const ids = decodeChecklist(importCode.value);
+    if(!ids || !ids.length) return;
+    watched = new Set(ids);
+    save(); sync();
+    showExport();
+    importCode.value = "";
+    importStatus.textContent = "Imported " + ids.length + (ids.length === 1 ? " film." : " films.");
+    importBtn.disabled = true;
+  });
 
   filters.forEach(btn => btn.addEventListener("click", () => {
     filters.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
