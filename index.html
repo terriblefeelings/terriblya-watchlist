@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Watchlist — 238 films</title>
+<meta name="description" content="A simple local checklist for 238 films. Progress saves in your browser.">
+<meta name="color-scheme" content="dark light">
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --fg:#cfcfcf;
+    --dim:#7c7c7c;
+    --faint:#565656;
+    --acc:#991d1d;
+    --acc-dim:#5e1414;
+    --line:#232323;
+    --line2:#343434;
+    --sel:#141414;
+    --pickbg:#1a0c0c;
+    --ctl:26px;
+    --mono:"Cascadia Mono","Cascadia Code",Consolas,"SF Mono",Menlo,ui-monospace,monospace;
+  }
+  :root[data-theme="light"]{
+    --bg:#f2f0ea;
+    --fg:#1c1c1c;
+    --dim:#5c5c5c;
+    --faint:#8b8880;
+    --acc:#1d7896;
+    --acc-dim:#1a5f77;
+    --line:#dad6cd;
+    --line2:#c5c0b5;
+    --sel:#e9e5dd;
+    --pickbg:#e2eef4;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:20px}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+  body{
+    margin:0;background:var(--bg);color:var(--fg);
+    font:400 13px/1.5 var(--mono);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--acc);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button,input,select{font:inherit;color:inherit;background:none;border:0;border-radius:0;appearance:none}
+  :focus-visible{outline:1px solid var(--acc);outline-offset:2px}
+  ::selection{background:var(--acc);color:var(--bg)}
+  .wrap{width:min(1040px,calc(100% - 32px));margin-inline:auto}
+  .skip{position:absolute;left:-9999px;top:0}
+  .skip:focus{left:8px;top:8px;background:var(--acc);color:var(--bg);padding:4px 8px;z-index:99}
+
+  /* hero */
+  .hero{border-bottom:1px solid var(--line);padding:28px 0 18px}
+  .hero__row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hero__lead{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0}
+  .hero h1{font:700 clamp(19px,3vw,25px)/1.15 var(--mono);letter-spacing:.18em;text-transform:uppercase;margin:0;color:var(--fg)}
+  .hero h1 em{font-style:normal;color:var(--acc)}
+  .progress{width:300px;max-width:100%;margin-left:auto}
+  .progress__num{color:var(--dim);font-size:11px;letter-spacing:.06em;line-height:1;margin-bottom:8px}
+  .progress__num b{color:var(--fg);font-size:16px;font-weight:700}
+  .progress__bar{height:10px;border:1px solid var(--line2);overflow:hidden}
+  .progress__bar i{
+    display:block;height:100%;width:0;
+    background:repeating-linear-gradient(90deg,var(--acc) 0 5px,transparent 5px 8px);
+    transition:width .2s linear;
+  }
+  .progress__note{margin:7px 0 0;color:var(--faint);font-size:11px;letter-spacing:.04em}
+  .progress__note b{color:var(--acc);font-weight:400}
+
+  /* randomizer */
+  .pick{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
+  .pick__btn{
+    display:inline-flex;align-items:center;height:var(--ctl);padding:0 10px;
+    border:1px solid var(--line2);color:var(--fg);cursor:pointer;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;transition:.12s;
+  }
+  .pick__btn:hover{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+  .pick__btn i{display:none}
+  .pick__out{margin:0;color:var(--faint);font-size:11.5px}
+  .pick__link{color:var(--acc);border-bottom:1px solid var(--acc-dim)}
+  .pick__link:hover{text-decoration:none;border-color:var(--acc)}
+
+  /* controls */
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 0;border-bottom:1px solid var(--line)}
+  .seg{display:flex;gap:4px}
+  .btn{
+    display:inline-flex;align-items:center;height:var(--ctl);padding:0 8px;
+    border:1px solid transparent;color:var(--dim);cursor:pointer;
+    font-size:11px;letter-spacing:.06em;text-transform:uppercase;transition:.12s;
+  }
+  .btn:hover{color:var(--fg);border-color:var(--line2)}
+  .btn[aria-pressed="true"]{color:var(--acc);border-color:var(--acc-dim)}
+  #viewBtn,#themeBtn{border-color:var(--line2)}
+  #viewBtn:hover,#themeBtn:hover{border-color:var(--acc-dim)}
+  .controls__sp{flex:1}
+  .search{position:relative;flex:1 1 210px;min-width:150px;height:var(--ctl);display:flex;align-items:center;gap:6px;border:1px solid var(--line2);padding:0 6px}
+  .search:focus-within{border-color:var(--acc-dim)}
+  .search::before{content:">";color:var(--acc);font-size:12px;line-height:1}
+  .search input{flex:1;height:100%;padding:0;font-size:12px;line-height:1;color:var(--fg)}
+  .search input:focus-visible{outline:none}
+  .search input::placeholder{color:var(--faint)}
+  .search kbd{display:none}
+  .select{display:inline-flex;align-items:center;height:var(--ctl);border:1px solid var(--line2);padding:0 6px;font-size:11px;line-height:1;color:var(--dim);cursor:pointer}
+  .select:hover{color:var(--fg);border-color:var(--acc-dim)}
+  @media(max-width:720px){
+    .controls__sp{display:none}
+    .search{flex:1 1 100%;order:-1}
+    .progress{width:100%;margin-left:0}
+  }
+
+  /* list */
+  .films{list-style:none;margin:0;padding:0}
+  .film{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+  .film[hidden]{display:none}
+  .film:hover{background:var(--sel)}
+  .film__check{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+  .film__boxlabel{display:flex;align-items:flex-start;padding:5px 7px 5px 2px;cursor:pointer;flex:0 0 auto}
+  .film__box{color:var(--faint);font-size:12.5px;line-height:1.5;white-space:nowrap;transition:.12s}
+  .film__box::before{content:"[ ]"}
+  .film.is-watched .film__box{color:var(--acc)}
+  .film.is-watched .film__box::before{content:"[x]"}
+  .film__boxlabel:hover .film__box{color:var(--fg)}
+  .film__check:focus-visible ~ .film__boxlabel .film__box{outline:1px dashed var(--acc);outline-offset:2px}
+  .film__main{flex:1;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;padding:5px 4px 5px 0;min-width:0}
+  .film__open,.film__name{
+    max-width:100%;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;text-align:left;
+  }
+  .film__open{justify-self:start;padding:0;background:none;cursor:pointer}
+  .film__open:hover .film__title{color:var(--acc)}
+  .film.is-watched .film__open:hover .film__title{color:var(--faint)}
+  .film__title{color:var(--fg);overflow-wrap:anywhere}
+  .film__uk{color:var(--faint);font-size:11.5px;overflow-wrap:anywhere}
+  .film__sub{color:var(--dim);font-size:11.5px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+  .film__sub i{color:var(--faint);font-style:normal}
+  .film__sub b{color:var(--dim);font-weight:400}
+  .film__link{
+    display:grid;place-items:center;width:30px;color:var(--faint);font-size:12px;
+    border-left:1px solid var(--line);flex:0 0 auto;
+  }
+  .film__link:hover{color:var(--acc);text-decoration:none;background:var(--sel)}
+  .film.is-watched .film__title{color:var(--faint);text-decoration:line-through}
+  .film.is-watched .film__uk{opacity:.45}
+  .film.is-picked{background:var(--pickbg);box-shadow:inset 2px 0 0 var(--acc)}
+  .film.is-picked .film__title{color:var(--acc)}
+  @media(max-width:720px){
+    .film__main{grid-template-columns:1fr;padding:6px 4px 6px 0}
+    .film__sub{grid-column:1;text-align:left;white-space:normal}
+  }
+
+  /* grid view */
+  .films.is-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 14px;padding:16px 0}
+  .films.is-grid .film{position:relative;display:flex;flex-direction:column;gap:8px;border:0}
+  .films.is-grid .film[hidden]{display:none}
+  .films.is-grid .film:hover{background:none}
+  .films.is-grid .film__poster{
+    display:block;width:100%;aspect-ratio:2/3;background:var(--sel);
+    border:1px solid var(--line2);overflow:hidden;
+  }
+  .films.is-grid .film__poster img{display:block;width:100%;height:100%;object-fit:cover}
+  .films.is-grid .film:hover .film__poster{border-color:var(--acc-dim)}
+  .films.is-grid .film.is-watched .film__poster img{filter:grayscale(1);opacity:.45}
+  .films.is-grid .film__boxlabel{position:absolute;top:6px;left:6px;z-index:2;background:var(--bg);padding:0 3px}
+  .films.is-grid .film__box{color:var(--fg);font-size:11px;line-height:1.4}
+  .films.is-grid .film.is-watched .film__box{color:var(--acc)}
+  .films.is-grid .film__main{display:flex;flex-direction:column;gap:2px;padding:0;flex:none}
+  .films.is-grid .film__name{flex-direction:column;gap:1px}
+  .films.is-grid .film__title{font-size:12px;line-height:1.3}
+  .films.is-grid .film__uk{font-size:10.5px;line-height:1.3}
+  .films.is-grid .film__sub{text-align:left;font-size:10.5px;white-space:normal}
+  .films.is-grid .film__link{position:absolute;top:6px;right:6px;z-index:2;width:22px;height:22px;border:0;background:var(--bg);color:var(--fg)}
+  .films.is-grid .film__link:hover{color:var(--acc)}
+  .films.is-grid .film.is-picked{background:none;box-shadow:none}
+  .films.is-grid .film.is-picked .film__poster{outline:2px solid var(--acc);outline-offset:2px}
+
+  .empty{display:none;padding:18px 0;color:var(--dim)}
+  .empty.is-on{display:block}
+  .empty::before{content:"! ";color:var(--acc)}
+
+  .foot{
+    border-top:1px solid var(--line);margin-top:24px;padding:12px 0 30px;
+    display:flex;justify-content:flex-end;color:var(--faint);font-size:11px;
+  }
+  .foot a{color:var(--dim)}
+
+  /* film details */
+  .modal{
+    width:min(620px,calc(100% - 32px));max-height:calc(100% - 48px);overflow:auto;
+    padding:0;border:1px solid var(--line2);background:var(--bg);color:var(--fg);
+  }
+  .modal::backdrop{background:rgba(0,0,0,.65)}
+  .modal__body{display:grid;grid-template-columns:170px 1fr;gap:22px;padding:20px;position:relative}
+  .modal__close{
+    position:absolute;top:8px;right:8px;display:grid;place-items:center;width:26px;height:26px;
+    border:1px solid var(--line2);color:var(--dim);font-size:15px;line-height:1;cursor:pointer;
+  }
+  .modal__close:hover{color:var(--fg);border-color:var(--acc-dim)}
+  .modal__poster{display:block;width:100%;height:auto;border:1px solid var(--line);background:var(--sel)}
+  .modal__poster[hidden]{display:none}
+  .modal__title{margin:0 40px 0 0;font-size:16px;line-height:1.25;letter-spacing:.1em;text-transform:uppercase}
+  .modal__uk{margin:4px 0 0;color:var(--faint);font-size:12px}
+  .modal__meta{margin:12px 0 0;color:var(--dim);font-size:11.5px}
+  .modal__meta b{color:var(--fg);font-weight:400}
+  .modal__desc{margin:12px 0 0;color:var(--dim);font-size:12.5px;line-height:1.65}
+  .modal__link{
+    display:inline-block;margin-top:16px;padding-bottom:2px;color:var(--acc);font-size:11px;
+    letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--acc-dim);
+  }
+  .modal__link:hover{text-decoration:none;border-color:var(--acc)}
+  @media(max-width:560px){
+    .modal__body{grid-template-columns:1fr;gap:16px;padding:16px}
+    .modal__poster{width:min(150px,45%)}
+  }
+
+  @media print{
+    :root{--bg:#fff;--fg:#000;--dim:#444;--faint:#666;--acc:#000;--line:#bbb;--line2:#bbb;--sel:#fff;--pickbg:#fff}
+    body{background:#fff;color:#000}
+    .controls,.pick,.progress,.foot,.modal{display:none!important}
+    .hero{border:0;padding:0 0 8px}
+    .hero h1{font-size:16px}
+    .film{border-color:#ccc;break-inside:avoid}
+    .film__link{display:none}
+    .film.is-watched .film__title{color:#000;text-decoration:line-through}
+    .film.is-picked{background:none;box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#list">Skip to the list</a>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero__row">
+      <div class="hero__lead">
+        <h1>The <em>Watchlist</em></h1>
+        <div class="pick">
+          <button class="pick__btn" type="button" id="randomBtn"><i aria-hidden="true"></i> Pick a random unwatched film</button>
+          <p class="pick__out" id="pickOut" aria-live="polite">Unwatched only — nothing picked yet.</p>
+        </div>
+      </div>
+      <div class="progress" aria-label="Watch progress">
+        <div class="progress__num"><b id="watchedCount">0</b> / <span id="totalCount">238</span></div>
+        <div class="progress__bar" id="progressTrack" role="progressbar" aria-valuemin="0" aria-valuemax="238" aria-valuenow="0" aria-label="Films watched"><i id="progressBar"></i></div>
+        <p class="progress__note"><b id="percent">0%</b> watched · <span id="remaining">238</span> left</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="controls" aria-label="Checklist controls">
+      <div class="seg" id="stateFilters" role="group" aria-label="Filter by watch state">
+        <button class="btn" type="button" data-state="all" aria-pressed="true">All</button>
+        <button class="btn" type="button" data-state="unwatched" aria-pressed="false">Unwatched</button>
+        <button class="btn" type="button" data-state="watched" aria-pressed="false">Watched</button>
+      </div>
+      <span class="controls__sp"></span>
+      <label class="search">
+        <span class="skip">Search films</span>
+        <input id="q" type="search" placeholder="Search title or year…" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </label>
+      <select class="select" id="sortBy" aria-label="Sort films">
+        <option value="default">Sort: as added</option>
+        <option value="title">Title A–Z</option>
+        <option value="year-desc">Year: newest</option>
+        <option value="year-asc">Year: oldest</option>
+        <option value="time-asc">Runtime: shortest</option>
+        <option value="time-desc">Runtime: longest</option>
+      </select>
+      <button class="btn" type="button" id="viewBtn">view: list</button>
+      <button class="btn" type="button" id="themeBtn">theme: dark</button>
+    </section>
+
+    <ol class="films" id="list"></ol>
+    <div class="empty" id="empty">No films match that filter.</div>
+
+    <footer class="foot">
+      <a href="#top">Back to top ↑</a>
+    </footer>
+  </div>
+</main>
+
+<dialog class="modal" id="filmDialog" aria-labelledby="dialogTitle">
+  <div class="modal__body">
+    <button class="modal__close" type="button" id="dialogClose" aria-label="Close">×</button>
+    <img class="modal__poster" id="dialogPoster" alt="" width="600" height="900">
+    <div class="modal__info">
+      <h2 class="modal__title" id="dialogTitle"></h2>
+      <p class="modal__uk" id="dialogUk"></p>
+      <p class="modal__meta" id="dialogMeta"></p>
+      <p class="modal__desc" id="dialogDesc"></p>
+      <a class="modal__link" id="dialogLink" href="#" target="_blank" rel="noopener noreferrer">View on Letterboxd ↗</a>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  const FILMS = [
+    { id: "shoplifters", title: "Shoplifters", uk: "Крамничні злодюжки", year: 2018, min: 121, url: "https://letterboxd.com/film/shoplifters/" },
+    { id: "the-farewell", title: "The Farewell", uk: "Прощання", year: 2019, min: 100, url: "https://letterboxd.com/film/the-farewell-2019/" },
+    { id: "end-of-watch", title: "End of Watch", uk: "Патруль", year: 2012, min: 109, url: "https://letterboxd.com/film/end-of-watch/" },
+    { id: "captain-fantastic", title: "Captain Fantastic", uk: "Капітан Фантастік", year: 2016, min: 118, url: "https://letterboxd.com/film/captain-fantastic/" },
+    { id: "beautiful-boy", title: "Beautiful Boy", uk: "Гарний хлопчик", year: 2018, min: 120, url: "https://letterboxd.com/film/beautiful-boy-2018/" },
+    { id: "amour", title: "Amour", uk: "Кохання", year: 2012, min: 127, url: "https://letterboxd.com/film/amour/" },
+    { id: "her", title: "Her", uk: "Вона", year: 2013, min: 126, url: "https://letterboxd.com/film/her/" },
+    { id: "eeaao", title: "Everything Everywhere All at Once", uk: "Все завжди і водночас", year: 2022, min: 139, url: "https://letterboxd.com/film/everything-everywhere-all-at-once/" },
+    { id: "manchester-by-the-sea", title: "Manchester by the Sea", uk: "Манчестер біля моря", year: 2016, min: 137, url: "https://letterboxd.com/film/manchester-by-the-sea/" },
+    { id: "sound-of-metal", title: "Sound of Metal", uk: "Звук металу", year: 2019, min: 120, url: "https://letterboxd.com/film/sound-of-metal/" },
+    { id: "kingdom-of-heaven", title: "Kingdom of Heaven", uk: "Царство небесне", year: 2005, min: 144, url: "https://letterboxd.com/film/kingdom-of-heaven/" },
+    { id: "little-miss-sunshine", title: "Little Miss Sunshine", uk: "Маленька міс Щастя", year: 2006, min: 102, url: "https://letterboxd.com/film/little-miss-sunshine/" },
+    { id: "the-bucket-list", title: "The Bucket List", uk: "Список останніх бажань", year: 2007, min: 97, url: "https://letterboxd.com/film/the-bucket-list/" },
+    { id: "the-lives-of-others", title: "The Lives of Others", uk: "Життя інших", year: 2006, min: 137, url: "https://letterboxd.com/film/the-lives-of-others/" },
+    { id: "in-bruges", title: "In Bruges", uk: "Залягти на дно в Брюгге", year: 2008, min: 107, url: "https://letterboxd.com/film/in-bruges/" },
+    { id: "the-pianist", title: "The Pianist", uk: "Піаніст", year: 2002, min: 149, url: "https://letterboxd.com/film/the-pianist/" },
+    { id: "a-serious-man", title: "A Serious Man", uk: "Серйозна людина", year: 2009, min: 106, url: "https://letterboxd.com/film/a-serious-man/" },
+    { id: "yi-yi", title: "Yi Yi", uk: "Один і два", year: 2000, min: 173, url: "https://letterboxd.com/film/yi-yi/" },
+    { id: "apocalypto", title: "Apocalypto", uk: "Апокаліпсис", year: 2006, min: 138, url: "https://letterboxd.com/film/apocalypto/" },
+    { id: "collateral", title: "Collateral", uk: "Співучасник", year: 2004, min: 120, url: "https://letterboxd.com/film/collateral/" },
+    { id: "children-of-men", title: "Children of Men", uk: "Останній нащадок Землі", year: 2006, min: 109, url: "https://letterboxd.com/film/children-of-men/" },
+    { id: "memento", title: "Memento", uk: "Пам'ятай", year: 2000, min: 113, url: "https://letterboxd.com/film/memento/" },
+    { id: "there-will-be-blood", title: "There Will Be Blood", uk: "Нафта", year: 2007, min: 158, url: "https://letterboxd.com/film/there-will-be-blood/" },
+    { id: "chungking-express", title: "Chungking Express", uk: "Чунцінський експрес", year: 1994, min: 102, url: "https://letterboxd.com/film/chungking-express/" },
+    { id: "fargo", title: "Fargo", uk: "Фарґо", year: 1996, min: 98, url: "https://letterboxd.com/film/fargo/" },
+    { id: "shall-we-dance", title: "Shall We Dance?", uk: "Потанцюємо?", year: 1996, min: 136, url: "https://letterboxd.com/film/shall-we-dance-1996/" },
+    { id: "2001-a-space-odyssey", title: "2001: A Space Odyssey", uk: "Космічна одіссея 2001 року", year: 1968, min: 139, url: "https://letterboxd.com/film/2001-a-space-odyssey/" },
+    { id: "being-john-malkovich", title: "Being John Malkovich", uk: "Бути Джоном Малковичем", year: 1999, min: 113, url: "https://letterboxd.com/film/being-john-malkovich/" },
+    { id: "hard-boiled", title: "Hard Boiled", uk: "Круто зварені", year: 1992, min: 128, url: "https://letterboxd.com/film/hard-boiled/" },
+    { id: "fallen-angels", title: "Fallen Angels", uk: "Упалі ангели", year: 1995, min: 99, url: "https://letterboxd.com/film/fallen-angels/" },
+    { id: "the-usual-suspects", title: "The Usual Suspects", uk: "Звичайні підозрювані", year: 1995, min: 106, url: "https://letterboxd.com/film/the-usual-suspects/" },
+    { id: "life-is-beautiful", title: "Life Is Beautiful", uk: "Життя прекрасне", year: 1997, min: 116, url: "https://letterboxd.com/film/life-is-beautiful/" },
+    { id: "la-haine", title: "La Haine", uk: "Ненависть", year: 1995, min: 98, url: "https://letterboxd.com/film/la-haine/" },
+    { id: "the-truman-show", title: "The Truman Show", uk: "Шоу Трумена", year: 1998, min: 103, url: "https://letterboxd.com/film/the-truman-show/" },
+    { id: "heat", title: "Heat", uk: "Сутичка", year: 1995, min: 170, url: "https://letterboxd.com/film/heat-1995/" },
+    { id: "goodfellas", title: "Goodfellas", uk: "Славні хлопці", year: 1990, min: 146, url: "https://letterboxd.com/film/goodfellas/" },
+    { id: "your-mother", title: "Your Mother Your Mother Your Mother", uk: "Твоя Мати Твоя Мати Твоя Мати", year: 2026, min: 112, url: "https://letterboxd.com/film/your-mother-your-mother-your-mother/" },
+    { id: "princess-kaguya", title: "The Tale of the Princess Kaguya", uk: "Казка про принцесу Каґую", year: 2013, min: 137, url: "https://letterboxd.com/film/the-tale-of-the-princess-kaguya/" },
+    { id: "millennium-actress", title: "Millennium Actress", uk: "Актриса тисячоліття", year: 2002, min: 87, url: "https://letterboxd.com/film/millennium-actress/" },
+    { id: "look-back", title: "Look Back", uk: "Озирнись", year: 2024, min: 60, url: "https://letterboxd.com/film/look-back-2024/" },
+    { id: "evangelion-thrice", title: "Evangelion: 3.0+1.0 Thrice Upon a Time", uk: "Evangelion: 3.0+1.0 Thrice Upon a Time", year: 2021, min: 155, url: "https://letterboxd.com/film/evangelion-3010-thrice-upon-a-time/" },
+    { id: "princess-mononoke", title: "Princess Mononoke", uk: "Принцеса Мононоке", year: 1997, min: 133, url: "https://letterboxd.com/film/princess-mononoke/" },
+    { id: "the-animatrix", title: "The Animatrix", uk: "The Animatrix", year: 2003, min: 102, url: "https://letterboxd.com/film/the-animatrix/" },
+    { id: "ran", title: "Ran", uk: "Ран", year: 1985, min: 162, url: "https://letterboxd.com/film/ran-1985/" },
+    { id: "dreams", title: "Dreams", uk: "Сни", year: 1990, min: 119, url: "https://letterboxd.com/film/dreams/" },
+    { id: "rental-family", title: "Rental Family", uk: "Сім'я напрокат", year: 2025, min: 110, url: "https://letterboxd.com/film/rental-family-2025/" },
+    { id: "hamnet", title: "Hamnet", uk: "Гамнет", year: 2025, min: 126, url: "https://letterboxd.com/film/hamnet/" },
+    { id: "fjord", title: "Fjord", uk: "Фіорд", year: 2026, min: 146, url: "https://letterboxd.com/film/fjord-2026/" },
+    { id: "you-can-see-everything", title: "You Can See Everything", uk: "Ти можеш побачити все", year: 2026, min: 174, url: "https://letterboxd.com/film/you-can-see-everything/" },
+    { id: "digger", title: "Digger", uk: "Діггер", year: 2026, min: 129, url: "https://letterboxd.com/film/digger-2026/" },
+    { id: "the-father", title: "The Father", uk: "Батько", year: 2020, min: 97, url: "https://letterboxd.com/film/the-father-2020/" },
+    { id: "wildwood", title: "Wildwood", uk: "Диволіс", year: 2026, min: 132, url: "https://letterboxd.com/film/wildwood-2026/" },
+    { id: "godzilla-minus-zero", title: "Godzilla Minus Zero", uk: "Ґодзілла: Мінус нуль", year: 2026, min: 135, url: "https://letterboxd.com/film/godzilla-minus-zero/" },
+    { id: "earth-is-blue", title: "The Earth Is Blue as an Orange", uk: "Земля блакитна, ніби апельсин", year: 2020, min: 74, url: "https://letterboxd.com/film/the-earth-is-blue-as-an-orange/" },
+    { id: "the-tribe", title: "The Tribe", uk: "Плем'я", year: 2014, min: 130, url: "https://letterboxd.com/film/the-tribe-2014/" },
+    { id: "my-joy", title: "My Joy", uk: "Щастя моє", year: 2010, min: 127, url: "https://letterboxd.com/film/my-joy/" },
+    { id: "crepuscule", title: "Crepuscule", uk: "Присмерк", year: 2014, min: 61, url: "https://letterboxd.com/film/crepuscule-2014/" },
+    { id: "the-living-fire", title: "The Living Fire", uk: "Жива ватра", year: 2015, min: 77, url: "https://letterboxd.com/film/the-living-fire/" },
+    { id: "in-the-mood-for-love", title: "In the Mood for Love", uk: "Любовний настрій", year: 2000, min: 98, url: "https://letterboxd.com/film/in-the-mood-for-love/" },
+    { id: "tenet", title: "Tenet", uk: "Тенет", year: 2020, min: 150, url: "https://letterboxd.com/film/tenet/" },
+    { id: "barry-lyndon", title: "Barry Lyndon", uk: "Баррі Ліндон", year: 1975, min: 185, url: "https://letterboxd.com/film/barry-lyndon/" },
+    { id: "1917", title: "1917", uk: "1917", year: 2019, min: 119, url: "https://letterboxd.com/film/1917/" },
+    { id: "jarhead", title: "Jarhead", uk: "Морпіхи", year: 2005, min: 123, url: "https://letterboxd.com/film/jarhead/" },
+    { id: "enemy", title: "Enemy", uk: "Ворог", year: 2013, min: 90, url: "https://letterboxd.com/film/enemy/" },
+    { id: "incendies", title: "Incendies", uk: "Пожежі", year: 2010, min: 130, url: "https://letterboxd.com/film/incendies/" },
+    { id: "the-life-aquatic", title: "The Life Aquatic with Steve Zissou", uk: "Водне життя зі Стівом Зіссу", year: 2004, min: 119, url: "https://letterboxd.com/film/the-life-aquatic-with-steve-zissou/" },
+    { id: "asteroid-city", title: "Asteroid City", uk: "Астероїд-Сіті", year: 2023, min: 105, url: "https://letterboxd.com/film/asteroid-city/" },
+    { id: "the-french-dispatch", title: "The French Dispatch", uk: "Французький вісник", year: 2021, min: 108, url: "https://letterboxd.com/film/the-french-dispatch-of-the-liberty-kansas/" },
+    { id: "the-phoenician-scheme", title: "The Phoenician Scheme", uk: "Фінікійська схема", year: 2025, min: 101, url: "https://letterboxd.com/film/the-phoenician-scheme/" },
+    { id: "the-irishman", title: "The Irishman", uk: "Ірландець", year: 2019, min: 209, url: "https://letterboxd.com/film/the-irishman-2019/" },
+    { id: "killers-of-the-flower-moon", title: "Killers of the Flower Moon", uk: "Вбивці квіткової повні", year: 2023, min: 206, url: "https://letterboxd.com/film/killers-of-the-flower-moon/" },
+    { id: "phantom-thread", title: "Phantom Thread", uk: "Примарна нитка", year: 2017, min: 130, url: "https://letterboxd.com/film/phantom-thread/" },
+    { id: "how-to-make-millions", title: "How to Make Millions Before Grandma Dies", uk: "Як заробити мільйони, поки не померла бабуся", year: 2024, min: 125, url: "https://letterboxd.com/film/how-to-make-millions-before-grandma-dies/" },
+    { id: "song-of-the-sea", title: "Song of the Sea", uk: "Пісня моря", year: 2014, min: 94, url: "https://letterboxd.com/film/song-of-the-sea/" },
+    { id: "synecdoche-new-york", title: "Synecdoche, New York", uk: "Нью-Йорк, Нью-Йорк", year: 2008, min: 123, url: "https://letterboxd.com/film/synecdoche-new-york/" },
+    { id: "coraline", title: "Coraline", uk: "Кораліна у Світі Кошмарів", year: 2009, min: 100, url: "https://letterboxd.com/film/coraline/" },
+    { id: "fireworks", title: "Fireworks", uk: "Феєрверк", year: 1997, min: 100, url: "https://letterboxd.com/film/fireworks-1997/" },
+    { id: "tangerines", title: "Tangerines", uk: "Мандарини", year: 2013, min: 87, url: "https://letterboxd.com/film/tangerines/" },
+    { id: "mishima", title: "Mishima: A Life in Four Chapters", uk: "Мішіма: Життя в чотирьох розділах", year: 1985, min: 120, url: "https://letterboxd.com/film/mishima-a-life-in-four-chapters/" },
+    { id: "the-thing", title: "The Thing", uk: "Щось", year: 1982, min: 109, url: "https://letterboxd.com/film/the-thing/" },
+    { id: "rain-man", title: "Rain Man", uk: "Людина дощу", year: 1988, min: 134, url: "https://letterboxd.com/film/rain-man/" },
+    { id: "once-upon-a-time-in-america", title: "Once Upon a Time in America", uk: "Одного разу в Америці", year: 1984, min: 229, url: "https://letterboxd.com/film/once-upon-a-time-in-america/" },
+    { id: "das-boot", title: "Das Boot", uk: "Підводний човен", year: 1981, min: 149, url: "https://letterboxd.com/film/das-boot/" },
+    { id: "raging-bull", title: "Raging Bull", uk: "Скажений бик", year: 1980, min: 129, url: "https://letterboxd.com/film/raging-bull/" },
+    { id: "the-cremator", title: "The Cremator", uk: "Спалювач мерців", year: 1969, min: 100, url: "https://letterboxd.com/film/the-cremator/" },
+    { id: "lost-in-translation", title: "Lost in Translation", uk: "Труднощі перекладу", year: 2003, min: 102, url: "https://letterboxd.com/film/lost-in-translation/" },
+    { id: "anatomy-of-a-fall", title: "Anatomy of a Fall", uk: "Анатомія падіння", year: 2023, min: 152, url: "https://letterboxd.com/film/anatomy-of-a-fall/" },
+    { id: "poor-things", title: "Poor Things", uk: "Бідолашні створіння", year: 2023, min: 142, url: "https://letterboxd.com/film/poor-things-2023/" },
+    { id: "encanto", title: "Encanto", uk: "Енканто: Світ магії", year: 2021, min: 102, url: "https://letterboxd.com/film/encanto/" },
+    { id: "avatar-fire-and-ash", title: "Avatar: Fire and Ash", uk: "Аватар: Вогонь і попіл", year: 2025, min: 197, url: "https://letterboxd.com/film/avatar-fire-and-ash/" },
+    { id: "avatar-way-of-water", title: "Avatar: The Way of Water", uk: "Аватар: Шлях води", year: 2022, min: 192, url: "https://letterboxd.com/film/avatar-the-way-of-water/" },
+    { id: "train-to-busan", title: "Train to Busan", uk: "Потяг до Пусана", year: 2016, min: 118, url: "https://letterboxd.com/film/train-to-busan/" },
+    { id: "a-history-of-violence", title: "A History of Violence", uk: "Виправдана жорстокість", year: 2005, min: 96, url: "https://letterboxd.com/film/a-history-of-violence/" },
+    { id: "flow", title: "Flow", uk: "Потік. Останній кіт на Землі", year: 2024, min: 85, url: "https://letterboxd.com/film/flow-2024/" },
+    { id: "the-northman", title: "The Northman", uk: "Варяг", year: 2022, min: 137, url: "https://letterboxd.com/film/the-northman/" },
+    { id: "all-quiet-western-front", title: "All Quiet on the Western Front", uk: "На Західному фронті без змін", year: 2022, min: 147, url: "https://letterboxd.com/film/all-quiet-on-the-western-front-2022/" },
+    { id: "alien-romulus", title: "Alien: Romulus", uk: "Чужий: Ромул", year: 2024, min: 119, url: "https://letterboxd.com/film/alien-romulus/" },
+    { id: "nosferatu", title: "Nosferatu", uk: "Носферату", year: 2024, min: 132, url: "https://letterboxd.com/film/nosferatu-2024/" },
+    { id: "28-years-later", title: "28 Years Later", uk: "28 років по тому", year: 2025, min: 115, url: "https://letterboxd.com/film/28-years-later/" },
+    { id: "28-years-later-bone-temple", title: "28 Years Later: The Bone Temple", uk: "28 років по тому: Храм кісток", year: 2026, min: 109, url: "https://letterboxd.com/film/28-years-later-the-bone-temple/" },
+    { id: "a-quiet-place-part-ii", title: "A Quiet Place Part II", uk: "Тихе місце 2", year: 2020, min: 97, url: "https://letterboxd.com/film/a-quiet-place-part-ii/" },
+    { id: "a-quiet-place", title: "A Quiet Place", uk: "Тихе місце", year: 2018, min: 90, url: "https://letterboxd.com/film/a-quiet-place-2018/" },
+    { id: "sentimental-value", title: "Sentimental Value", uk: "Сентиментальна цінність", year: 2025, min: 133, url: "https://letterboxd.com/film/sentimental-value-2025/" },
+    { id: "american-sniper", title: "American Sniper", uk: "Американський снайпер", year: 2014, min: 132, url: "https://letterboxd.com/film/american-sniper/" },
+    { id: "bugonia", title: "Bugonia", uk: "Буґонія", year: 2025, min: 118, url: "https://letterboxd.com/film/bugonia/" },
+    { id: "the-brutalist", title: "The Brutalist", uk: "Бруталіст", year: 2024, min: 215, url: "https://letterboxd.com/film/the-brutalist/" },
+    { id: "only-god-forgives", title: "Only God Forgives", uk: "Лише Бог прощає", year: 2013, min: 90, url: "https://letterboxd.com/film/only-god-forgives/" },
+    { id: "captain-phillips", title: "Captain Phillips", uk: "Капітан Філліпс", year: 2013, min: 134, url: "https://letterboxd.com/film/captain-phillips/" },
+    { id: "kubo-and-the-two-strings", title: "Kubo and the Two Strings", uk: "Кубо і легенда самурая", year: 2016, min: 102, url: "https://letterboxd.com/film/kubo-and-the-two-strings/" },
+    { id: "dear-zachary", title: "Dear Zachary: A Letter to a Son About His Father", uk: "Дорогий Закарі: лист синові про його батька", year: 2008, min: 93, url: "https://letterboxd.com/film/dear-zachary-a-letter-to-a-son-about-his-father/" },
+    { id: "paddington-2", title: "Paddington 2", uk: "Пригоди Паддінгтона 2", year: 2017, min: 104, url: "https://letterboxd.com/film/paddington-2/" },
+    { id: "paddington", title: "Paddington", uk: "Пригоди Паддінгтона", year: 2014, min: 95, url: "https://letterboxd.com/film/paddington/" },
+    { id: "life-of-pi", title: "Life of Pi", uk: "Життя Пі", year: 2012, min: 127, url: "https://letterboxd.com/film/life-of-pi/" },
+    { id: "loving-vincent", title: "Loving Vincent", uk: "З любов'ю, Вінсент", year: 2017, min: 95, url: "https://letterboxd.com/film/loving-vincent/" },
+    { id: "the-fisher-king", title: "The Fisher King", uk: "Король-рибалка", year: 1991, min: 137, url: "https://letterboxd.com/film/the-fisher-king/" },
+    { id: "enter-the-void", title: "Enter the Void", uk: "Увійти в порожнечу", year: 2009, min: 161, url: "https://letterboxd.com/film/enter-the-void/" },
+    { id: "irreversible", title: "Irreversible", uk: "Незворотність", year: 2002, min: 97, url: "https://letterboxd.com/film/irreversible/" },
+    { id: "possession", title: "Possession", uk: "Одержимість", year: 1981, min: 124, url: "https://letterboxd.com/film/possession/" },
+    { id: "one-cut-of-the-dead", title: "One Cut of the Dead", uk: "Зомбі одним планом", year: 2017, min: 97, url: "https://letterboxd.com/film/one-cut-of-the-dead/" },
+    { id: "children-of-the-sea", title: "Children of the Sea", uk: "Діти моря", year: 2019, min: 111, url: "https://letterboxd.com/film/children-of-the-sea/" },
+    { id: "zootopia-2", title: "Zootopia 2", uk: "Зоотрополіс 2", year: 2025, min: 108, url: "https://letterboxd.com/film/zootopia-2/" },
+    { id: "the-girl-who-leapt-through-time", title: "The Girl Who Leapt Through Time", uk: "Дівчинка, що стрибала крізь час", year: 2006, min: 98, url: "https://letterboxd.com/film/the-girl-who-leapt-through-time/" },
+    { id: "the-summit-of-the-gods", title: "The Summit of the Gods", uk: "Вершина богів", year: 2021, min: 90, url: "https://letterboxd.com/film/the-summit-of-the-gods/" },
+    { id: "mary-and-max", title: "Mary and Max", uk: "Мері та Макс", year: 2009, min: 90, url: "https://letterboxd.com/film/mary-and-max/" },
+    { id: "marcel-the-shell", title: "Marcel the Shell with Shoes On", uk: "Марсель, мушля в черевичках", year: 2021, min: 90, url: "https://letterboxd.com/film/marcel-the-shell-with-shoes-on-2021/" },
+    { id: "the-master", title: "The Master", uk: "Майстер", year: 2012, min: 137, url: "https://letterboxd.com/film/the-master-2012/" },
+    { id: "reservoir-dogs", title: "Reservoir Dogs", uk: "Скажені пси", year: 1992, min: 99, url: "https://letterboxd.com/film/reservoir-dogs/" },
+    { id: "bicentennial-man", title: "Bicentennial Man", uk: "Двохсотлітня людина", year: 1999, min: 132, url: "https://letterboxd.com/film/bicentennial-man/" },
+    { id: "one-hour-photo", title: "One Hour Photo", uk: "Фото за годину", year: 2002, min: 96, url: "https://letterboxd.com/film/one-hour-photo/" },
+    { id: "save-the-green-planet", title: "Save the Green Planet!", uk: "Врятуй зелену планету!", year: 2003, min: 118, url: "https://letterboxd.com/film/save-the-green-planet/" },
+    { id: "assassination-of-jesse-james", title: "The Assassination of Jesse James by the Coward Robert Ford", uk: "Як боязкий Роберт Форд убив Джессі Джеймса", year: 2007, min: 160, url: "https://letterboxd.com/film/the-assassination-of-jesse-james-by-the-coward-robert-ford/" },
+    { id: "the-machinist", title: "The Machinist", uk: "Машиніст", year: 2004, min: 102, url: "https://letterboxd.com/film/the-machinist/" },
+    { id: "vagabond", title: "Vagabond", uk: "Без даху, поза законом", year: 1985, min: 105, url: "https://letterboxd.com/film/vagabond/" },
+    { id: "gravity", title: "Gravity", uk: "Гравітація", year: 2013, min: 91, url: "https://letterboxd.com/film/gravity-2013/" },
+    { id: "moon", title: "Moon", uk: "Місяць", year: 2009, min: 97, url: "https://letterboxd.com/film/moon/" },
+    { id: "you-were-never-really-here", title: "You Were Never Really Here", uk: "Тебе ніколи тут не було", year: 2017, min: 90, url: "https://letterboxd.com/film/you-were-never-really-here/" },
+    { id: "brawl-in-cell-block-99", title: "Brawl in Cell Block 99", uk: "Бійка в блоці 99", year: 2017, min: 132, url: "https://letterboxd.com/film/brawl-in-cell-block-99/" },
+    { id: "natural-born-killers", title: "Natural Born Killers", uk: "Природжені вбивці", year: 1994, min: 119, url: "https://letterboxd.com/film/natural-born-killers/" },
+    { id: "battle-royale", title: "Battle Royale", uk: "Королівська битва", year: 2000, min: 113, url: "https://letterboxd.com/film/battle-royale/" },
+    { id: "the-boy-and-the-heron", title: "The Boy and the Heron", uk: "Хлопчик і чапля", year: 2023, min: 124, url: "https://letterboxd.com/film/the-boy-and-the-heron/" },
+    { id: "beau-is-afraid", title: "Beau Is Afraid", uk: "Усі страхи Бо", year: 2023, min: 179, url: "https://letterboxd.com/film/beau-is-afraid/" },
+    { id: "videodrome", title: "Videodrome", uk: "Відеодром", year: 1983, min: 89, url: "https://letterboxd.com/film/videodrome/" },
+    { id: "under-the-skin", title: "Under the Skin", uk: "Опинись у моїй шкірі", year: 2013, min: 108, url: "https://letterboxd.com/film/under-the-skin-2013/" },
+    { id: "hotel-rwanda", title: "Hotel Rwanda", uk: "Готель «Руанда»", year: 2004, min: 121, url: "https://letterboxd.com/film/hotel-rwanda/" },
+    { id: "paris-texas", title: "Paris, Texas", uk: "Париж, Техас", year: 1984, min: 147, url: "https://letterboxd.com/film/paris-texas/" },
+    { id: "o-brother-where-art-thou", title: "O Brother, Where Art Thou?", uk: "О, де ж ти, брате?", year: 2000, min: 107, url: "https://letterboxd.com/film/o-brother-where-art-thou/" },
+    { id: "roma", title: "Roma", uk: "Рома", year: 2018, min: 135, url: "https://letterboxd.com/film/roma-2018/" },
+    { id: "adaptation", title: "Adaptation.", uk: "Адаптація", year: 2002, min: 115, url: "https://letterboxd.com/film/adaptation/" },
+    { id: "the-tree-of-life", title: "The Tree of Life", uk: "Древо життя", year: 2011, min: 138, url: "https://letterboxd.com/film/the-tree-of-life-2011/" },
+    { id: "the-act-of-killing", title: "The Act of Killing", uk: "Акт вбивства", year: 2012, min: 122, url: "https://letterboxd.com/film/the-act-of-killing/" },
+    { id: "im-still-here", title: "I'm Still Here", uk: "Я все ще тут", year: 2024, min: 138, url: "https://letterboxd.com/film/im-still-here-2024/" },
+    { id: "wild-horse-nine", title: "Wild Horse Nine", uk: "Дикий кінь номер дев'ять", year: 2026, min: 117, url: "https://letterboxd.com/film/wild-horse-nine/" },
+    { id: "la-bola-negra", title: "La Bola Negra", uk: "Чорна куля", year: 2026, min: 159, url: "https://letterboxd.com/film/la-bola-negra/" },
+    { id: "society-of-the-snow", title: "Society of the Snow", uk: "Снігова спільнота", year: 2023, min: 144, url: "https://letterboxd.com/film/society-of-the-snow/" },
+    { id: "all-about-my-mother", title: "All About My Mother", uk: "Все про мою матір", year: 1999, min: 104, url: "https://letterboxd.com/film/all-about-my-mother/" },
+    { id: "pain-and-glory", title: "Pain and Glory", uk: "Біль та слава", year: 2019, min: 114, url: "https://letterboxd.com/film/pain-and-glory/" },
+    { id: "homeward-2019", title: "Homeward", uk: "Додому", year: 2019, min: 97, url: "https://letterboxd.com/film/homeward-2019/" },
+    { id: "pamfir", title: "Pamfir", uk: "Памфір", year: 2022, min: 102, url: "https://letterboxd.com/film/pamfir/" },
+    { id: "rock-paper-grenade", title: "Rock Paper Grenade", uk: "Я і Фелікс", year: 2022, min: 92, url: "https://letterboxd.com/film/rock-paper-grenade/" },
+    { id: "the-english-patient", title: "The English Patient", uk: "Англійський пацієнт", year: 1996, min: 162, url: "https://letterboxd.com/film/the-english-patient/" },
+    { id: "babel-2006", title: "Babel", uk: "Вавилон", year: 2006, min: 144, url: "https://letterboxd.com/film/babel-2006/" },
+    { id: "oppenheimer-2023", title: "Oppenheimer", uk: "Оппенгеймер", year: 2023, min: 180, url: "https://letterboxd.com/film/oppenheimer-2023/" },
+    { id: "the-power-of-the-dog", title: "The Power of the Dog", uk: "У руках пса", year: 2021, min: 126, url: "https://letterboxd.com/film/the-power-of-the-dog/" },
+    { id: "past-lives", title: "Past Lives", uk: "Минулі життя", year: 2023, min: 106, url: "https://letterboxd.com/film/past-lives/" },
+    { id: "nomadland", title: "Nomadland", uk: "Земля кочівників", year: 2020, min: 108, url: "https://letterboxd.com/film/nomadland/" },
+    { id: "the-wrestler", title: "The Wrestler", uk: "Рестлер", year: 2008, min: 109, url: "https://letterboxd.com/film/the-wrestler/" },
+    { id: "crouching-tiger-hidden-dragon", title: "Crouching Tiger, Hidden Dragon", uk: "Тигр підкрадається, дракон ховається", year: 2000, min: 120, url: "https://letterboxd.com/film/crouching-tiger-hidden-dragon/" },
+    { id: "as-good-as-it-gets", title: "As Good as It Gets", uk: "Краще не буває", year: 1997, min: 138, url: "https://letterboxd.com/film/as-good-as-it-gets/" },
+    { id: "one-flew-over-the-cuckoos-nest", title: "One Flew Over the Cuckoo's Nest", uk: "Пролітаючи над гніздом зозулі", year: 1975, min: 135, url: "https://letterboxd.com/film/one-flew-over-the-cuckoos-nest/" },
+    { id: "the-full-monty", title: "The Full Monty", uk: "Чоловічий стриптиз", year: 1997, min: 91, url: "https://letterboxd.com/film/the-full-monty/" },
+    { id: "conclave", title: "Conclave", uk: "Конклав", year: 2024, min: 120, url: "https://letterboxd.com/film/conclave/" },
+    { id: "atonement", title: "Atonement", uk: "Спокута", year: 2007, min: 123, url: "https://letterboxd.com/film/atonement/" },
+    { id: "coda-2021", title: "CODA", uk: "У ритмі серця", year: 2021, min: 111, url: "https://letterboxd.com/film/coda-2021/" },
+    { id: "boiling-point", title: "Boiling Point", uk: "Точка кипіння", year: 1990, min: 97, url: "https://letterboxd.com/film/boiling-point/" },
+    { id: "boiling-point-2021", title: "Boiling Point", uk: "Точка кипіння", year: 2021, min: 92, url: "https://letterboxd.com/film/boiling-point-2021/" },
+    { id: "at-eternitys-gate", title: "At Eternity's Gate", uk: "Ван Гог. На порозі вічності", year: 2018, min: 110, url: "https://letterboxd.com/film/at-eternitys-gate/" },
+    { id: "man-on-the-moon", title: "Man on the Moon", uk: "Людина на Місяці", year: 1999, min: 119, url: "https://letterboxd.com/film/man-on-the-moon/" },
+    { id: "cinderella-man", title: "Cinderella Man", uk: "Нокдаун", year: 2005, min: 144, url: "https://letterboxd.com/film/cinderella-man/" },
+    { id: "the-legend-of-ochi", title: "The Legend of Ochi", uk: "Очі: Легенда Карпат", year: 2025, min: 95, url: "https://letterboxd.com/film/the-legend-of-ochi/" },
+    { id: "tombstone", title: "Tombstone", uk: "Тумстоун", year: 1993, min: 130, url: "https://letterboxd.com/film/tombstone/" },
+    { id: "control-2007", title: "Control", uk: "Контроль", year: 2007, min: 122, url: "https://letterboxd.com/film/control-2007/" },
+    { id: "the-green-knight", title: "The Green Knight", uk: "Легенда про Зеленого лицаря", year: 2021, min: 130, url: "https://letterboxd.com/film/the-green-knight/" },
+    { id: "monkey-man", title: "Monkey Man", uk: "Манкімен", year: 2024, min: 121, url: "https://letterboxd.com/film/monkey-man/" },
+    { id: "the-teacher-who-promised-the-sea", title: "The Teacher Who Promised the Sea", uk: "Вчитель, який обіцяв море", year: 2023, min: 105, url: "https://letterboxd.com/film/the-teacher-who-promised-the-sea/" },
+    { id: "maquia-when-the-promised-flower-blooms", title: "Maquia: When the Promised Flower Blooms", uk: "Прикрась прощальний ранок квітами надії", year: 2018, min: 115, url: "https://letterboxd.com/film/maquia-when-the-promised-flower-blooms/" },
+    { id: "the-promised-land-2023", title: "The Promised Land", uk: "Земля короля", year: 2023, min: 127, url: "https://letterboxd.com/film/the-promised-land-2023/" },
+    { id: "casino-royale-2006", title: "Casino Royale", uk: "Казино «Рояль»", year: 2006, min: 144, url: "https://letterboxd.com/film/casino-royale-2006/" },
+    { id: "skyfall", title: "Skyfall", uk: "007: Координати «Скайфолл»", year: 2012, min: 143, url: "https://letterboxd.com/film/skyfall/" },
+    { id: "quantum-of-solace", title: "Quantum of Solace", uk: "Квант милосердя", year: 2008, min: 106, url: "https://letterboxd.com/film/quantum-of-solace/" },
+    { id: "spectre-2015", title: "Spectre", uk: "007: Спектр", year: 2015, min: 148, url: "https://letterboxd.com/film/spectre-2015/" },
+    { id: "no-time-to-die-2021", title: "No Time to Die", uk: "007: Не час помирати", year: 2021, min: 163, url: "https://letterboxd.com/film/no-time-to-die-2021/" },
+    { id: "riders-of-justice", title: "Riders of Justice", uk: "Лицарі справедливості", year: 2020, min: 116, url: "https://letterboxd.com/film/riders-of-justice/" },
+    { id: "taste-of-cherry", title: "Taste of Cherry", uk: "Смак вишні", year: 1997, min: 99, url: "https://letterboxd.com/film/taste-of-cherry/" },
+    { id: "deep-cover", title: "Deep Cover", uk: "Під прикриттям", year: 1992, min: 108, url: "https://letterboxd.com/film/deep-cover/" },
+    { id: "the-foreigner-2017", title: "The Foreigner", uk: "Іноземець", year: 2017, min: 114, url: "https://letterboxd.com/film/the-foreigner-2017/" },
+    { id: "the-shadows-edge-2025", title: "The Shadow's Edge", uk: "Край тіні", year: 2025, min: 142, url: "https://letterboxd.com/film/the-shadows-edge-2025/" },
+    { id: "pusher", title: "Pusher", uk: "Дилер", year: 1996, min: 105, url: "https://letterboxd.com/film/pusher/" },
+    { id: "bleeder", title: "Bleeder", uk: "Той, що стікає кров'ю", year: 1999, min: 97, url: "https://letterboxd.com/film/bleeder/" },
+    { id: "pusher-ii", title: "Pusher II", uk: "Дилер 2", year: 2004, min: 100, url: "https://letterboxd.com/film/pusher-ii/" },
+    { id: "adams-apples", title: "Adam's Apples", uk: "Адамові яблука", year: 2005, min: 94, url: "https://letterboxd.com/film/adams-apples/" },
+    { id: "the-seed-of-the-sacred-fig", title: "The Seed of the Sacred Fig", uk: "Насіння священного інжиру", year: 2024, min: 168, url: "https://letterboxd.com/film/the-seed-of-the-sacred-fig/" },
+    { id: "this-is-england", title: "This Is England", uk: "Це Англія", year: 2006, min: 102, url: "https://letterboxd.com/film/this-is-england/" },
+    { id: "close-up", title: "Close-Up", uk: "Великий план", year: 1990, min: 98, url: "https://letterboxd.com/film/close-up/" },
+    { id: "dog-day-afternoon", title: "Dog Day Afternoon", uk: "Собачий полудень", year: 1975, min: 125, url: "https://letterboxd.com/film/dog-day-afternoon/" },
+    { id: "made-in-hong-kong", title: "Made in Hong Kong", uk: "Зроблено в Гонконзі", year: 1997, min: 108, url: "https://letterboxd.com/film/made-in-hong-kong/" },
+    { id: "the-taste-of-tea", title: "The Taste of Tea", uk: "Смак чаю", year: 2004, min: 143, url: "https://letterboxd.com/film/the-taste-of-tea/" },
+    { id: "la-chimera", title: "La Chimera", uk: "Химера", year: 2023, min: 133, url: "https://letterboxd.com/film/la-chimera/" },
+    { id: "big-fish", title: "Big Fish", uk: "Велика риба", year: 2003, min: 125, url: "https://letterboxd.com/film/big-fish/" },
+    { id: "monster-2023", title: "Monster", uk: "Монстр", year: 2023, min: 125, url: "https://letterboxd.com/film/monster-2023/" },
+    { id: "dark-city-1998", title: "Dark City", uk: "Темне місто", year: 1998, min: 100, url: "https://letterboxd.com/film/dark-city-1998/" },
+    { id: "mother-2009", title: "Mother", uk: "Мати", year: 2009, min: 128, url: "https://letterboxd.com/film/mother-2009/" },
+    { id: "angels-egg", title: "Angel's Egg", uk: "Tenshi no Tamago", year: 1985, min: 71, url: "https://letterboxd.com/film/angels-egg/" },
+    { id: "patlabor-2-the-movie", title: "Patlabor 2: The Movie", uk: "Патлейбор 2", year: 1993, min: 113, url: "https://letterboxd.com/film/patlabor-2-the-movie/" },
+    { id: "patlabor-the-movie", title: "Patlabor: The Movie", uk: "Патлейбор", year: 1989, min: 98, url: "https://letterboxd.com/film/patlabor-the-movie/" },
+    { id: "nirvanna-the-band-the-show-the-movie", title: "Nirvanna the Band the Show the Movie", uk: "Nirvanna the Band the Show the Movie", year: 2025, min: 100, url: "https://letterboxd.com/film/nirvanna-the-band-the-show-the-movie/" },
+    { id: "310-to-yuma-2007", title: "3:10 to Yuma", uk: "Потяг до Юми", year: 2007, min: 122, url: "https://letterboxd.com/film/310-to-yuma-2007/" },
+    { id: "dunkirk-2017", title: "Dunkirk", uk: "Дюнкерк", year: 2017, min: 106, url: "https://letterboxd.com/film/dunkirk-2017/" },
+    { id: "number-24", title: "Number 24", uk: "Номер 24", year: 2024, min: 112, url: "https://letterboxd.com/film/number-24/" },
+    { id: "the-captain-2017", title: "The Captain", uk: "Капітан", year: 2017, min: 118, url: "https://letterboxd.com/film/the-captain-2017/" },
+    { id: "land-of-mine", title: "Land of Mine", uk: "Під піском", year: 2015, min: 100, url: "https://letterboxd.com/film/land-of-mine/" },
+    { id: "paradise-now", title: "Paradise Now", uk: "Рай зараз", year: 2005, min: 91, url: "https://letterboxd.com/film/paradise-now/" },
+    { id: "no-mans-land-2001", title: "No Man's Land", uk: "Нічия земля", year: 2001, min: 98, url: "https://letterboxd.com/film/no-mans-land-2001/" },
+    { id: "good-morning-vietnam", title: "Good Morning, Vietnam", uk: "Доброго ранку, В'єтнаме", year: 1987, min: 121, url: "https://letterboxd.com/film/good-morning-vietnam/" },
+    { id: "kneecap", title: "Kneecap", uk: "Kneecap", year: 2024, min: 105, url: "https://letterboxd.com/film/kneecap/" },
+    { id: "columbus-2017", title: "Columbus", uk: "Колумбус", year: 2017, min: 104, url: "https://letterboxd.com/film/columbus-2017/" },
+    { id: "the-raid-2", title: "The Raid 2", uk: "Рейд 2: Негідник", year: 2014, min: 150, url: "https://letterboxd.com/film/the-raid-2/" },
+    { id: "the-raid-2011", title: "The Raid", uk: "Рейд", year: 2011, min: 101, url: "https://letterboxd.com/film/the-raid-2011/" },
+    { id: "silence", title: "Silence", uk: "Мовчання", year: 2016, min: 161, url: "https://letterboxd.com/film/silence/" },
+    { id: "good-bye-lenin", title: "Good Bye, Lenin!", uk: "Ґуд бай, Ленін!", year: 2003, min: 121, url: "https://letterboxd.com/film/good-bye-lenin/" },
+    { id: "lady-vengeance", title: "Lady Vengeance", uk: "Співчуття пані Помсті", year: 2005, min: 115, url: "https://letterboxd.com/film/lady-vengeance/" },
+    { id: "werckmeister-harmonies", title: "Werckmeister Harmonies", uk: "Гармонії Веркмейстера", year: 2000, min: 145, url: "https://letterboxd.com/film/werckmeister-harmonies/" },
+    { id: "the-thin-red-line", title: "The Thin Red Line", uk: "Тонка червона лінія", year: 1998, min: 170, url: "https://letterboxd.com/film/the-thin-red-line/" },
+    { id: "gia", title: "Gia", uk: "Джіа", year: 1998, min: 126, url: "https://letterboxd.com/film/gia/" },
+    { id: "nebraska", title: "Nebraska", uk: "Небраска", year: 2013, min: 115, url: "https://letterboxd.com/film/nebraska/" },
+    { id: "beau-travail", title: "Beau Travail", uk: "Красива робота", year: 1999, min: 90, url: "https://letterboxd.com/film/beau-travail/" },
+    { id: "king-of-new-york", title: "King of New York", uk: "Король Нью-Йорка", year: 1990, min: 103, url: "https://letterboxd.com/film/king-of-new-york/" },
+    { id: "petite-maman", title: "Petite Maman", uk: "Маленька мама", year: 2021, min: 72, url: "https://letterboxd.com/film/petite-maman/" },
+    { id: "oslo-august-31st", title: "Oslo, August 31st", uk: "Осло, 31 серпня", year: 2011, min: 95, url: "https://letterboxd.com/film/oslo-august-31st/" },
+  ];
+
+  const DETAILS = {
+    "shoplifters": {director: "Hirokazu Kore-eda", desc: "In the outskirts of Tokyo, a poor but close-knit group living on the fringes of society survives through shoplifting and odd jobs. When Osamu and his son take in a neglected young girl, their already fragile existence begins to unravel. As the family grows attached to her, buried secrets surface, forcing them to confront the true meaning of love, belonging, and what makes a family.", poster: "https://a.ltrbxd.com/resized/film-poster/4/3/5/1/2/9/435129-shoplifters-0-600-0-900-crop.jpg?v=f4c3e34d37"},
+    "the-farewell": {director: "Lulu Wang", desc: "A headstrong Chinese-American woman returns to China when her beloved grandmother is given a terminal diagnosis. Billi struggles with her family's decision to keep grandma in the dark about her own illness as they all stage an impromptu wedding to see grandma one last time.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/3/6/9/7/493697-the-farewell-0-600-0-900-crop.jpg?v=115ef58791"},
+    "end-of-watch": {director: "David Ayer", desc: "Two young officers are marked for death after confiscating a small cache of money and firearms from the members of a notorious cartel during a routine traffic stop.", poster: "https://a.ltrbxd.com/resized/film-poster/6/3/4/6/2/63462-end-of-watch-0-600-0-900-crop.jpg?v=da5e26db65"},
+    "captain-fantastic": {director: "Matt Ross", desc: "Deep in the forests of the Pacific Northwest, a father devoted to raising his six kids with a rigorous physical and intellectual education is forced to leave his paradise and enter the world, beginning a journey that challenges his idea of what it means to be a parent.", poster: "https://a.ltrbxd.com/resized/sm/upload/5d/hg/f9/my/fnaGmGCWgGOQjCpM0TqKPZJ5x85-0-600-0-900-crop.jpg?v=f4a9ad9d7a"},
+    "beautiful-boy": {director: "Felix van Groeningen", desc: "After he and his first wife separate, journalist David Sheff struggles to help their teenage son, who goes from experimenting with drugs to becoming devastatingly addicted to methamphetamine.", poster: "https://a.ltrbxd.com/resized/film-poster/3/8/4/0/5/8/384058-beautiful-boy-0-600-0-900-crop.jpg?v=f926f71a50"},
+    "amour": {director: "Michael Haneke", desc: "Georges and Anne are in their eighties. They are cultivated, retired music teachers. Their daughter, who is also a musician, lives abroad with her family. One day, Anne has a stroke, and the couple's bond of love is severely tested.", poster: "https://a.ltrbxd.com/resized/film-poster/7/3/3/5/9/73359-amour-0-600-0-900-crop.jpg?v=2a2710b0aa"},
+    "her": {director: "Spike Jonze", desc: "In the not so distant future, Theodore, a lonely writer, purchases a newly developed operating system designed to meet the user's every need. To Theodore's surprise, a romantic relationship develops between him and his operating system. This unconventional love story blends science fiction and romance in a sweet tale that explores the nature of love and the ways that technology isolates and connects us all.", poster: "https://a.ltrbxd.com/resized/sm/upload/au/nb/i6/lq/fsoTLnUXEUTNuVCBxAJMY0HPPd-0-600-0-900-crop.jpg?v=16789732be"},
+    "eeaao": {director: "Daniel Scheinert, Daniel Kwan", desc: "An aging Chinese immigrant is swept up in an insane adventure, where she alone can save what's important to her by connecting with the lives she could have led in other universes.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/4/4/7/4/474474-everything-everywhere-all-at-once-0-600-0-900-crop.jpg?v=281f1a041e"},
+    "manchester-by-the-sea": {director: "Kenneth Lonergan", desc: "After his older brother passes away, Lee Chandler is forced to return home to care for his 16-year-old nephew. There he is compelled to deal with a tragic past that separated him from his family and the community where he was born and raised.", poster: "https://a.ltrbxd.com/resized/sm/upload/i7/li/tp/62/i0t7F6b4R1wURRESAiw9VJNuVoV-0-600-0-900-crop.jpg?v=65942464ea"},
+    "sound-of-metal": {director: "Darius Marder", desc: "Metal drummer Ruben begins to lose his hearing. When a doctor tells him his condition will worsen, he thinks his career and life is over. His girlfriend Lou checks the former addict into a rehab for the deaf hoping it will prevent a relapse and help him adapt to his new life. After being welcomed and accepted just as he is, Ruben must choose between his new normal and the life he once knew.", poster: "https://a.ltrbxd.com/resized/film-poster/4/3/2/0/0/4/432004-sound-of-metal-0-600-0-900-crop.jpg?v=289acd955b"},
+    "kingdom-of-heaven": {director: "Ridley Scott", desc: "After his wife dies, a blacksmith named Balian is thrust into royalty, political intrigue and bloody holy wars during the Crusades.", poster: "https://a.ltrbxd.com/resized/sm/upload/yo/63/zv/99/2pE4pTT8IXF56fiWMOk7cv7Fkpi-0-600-0-900-crop.jpg?v=3fa83a60a6"},
+    "little-miss-sunshine": {director: "Valerie Faris, Jonathan Dayton", desc: "A family loaded with quirky, colorful characters piles into an old van and road trips to California for little Olive to compete in a beauty pageant.", poster: "https://a.ltrbxd.com/resized/sm/upload/h6/xm/om/q7/dOeM4R55TsAFBXCPNIDDMiJkePr-0-600-0-900-crop.jpg?v=09383296c6"},
+    "the-bucket-list": {director: "Rob Reiner", desc: "Corporate billionaire Edward Cole and working class mechanic Carter Chambers are worlds apart. At a crossroads in their lives, they share a hospital room and discover they have two things in common: a desire to spend the time they have left doing everything they ever wanted to do and an unrealized need to come to terms with who they are. Together they embark on the road trip of a lifetime, becoming friends along the way and learning to live life to the fullest, with insight and humor.", poster: "https://a.ltrbxd.com/resized/film-poster/4/8/0/3/9/48039-the-bucket-list-0-600-0-900-crop.jpg?v=1b044419bf"},
+    "the-lives-of-others": {director: "Florian Henckel von Donnersmarck", desc: "In 1984 East Berlin, dedicated Stasi officer Gerd Wiesler begins spying on a famous playwright and his actress-lover Christa-Maria. Wiesler becomes unexpectedly sympathetic to the couple, and faces conflicting loyalties when his superior takes a liking to Christa-Maria.", poster: "https://a.ltrbxd.com/resized/sm/upload/8b/y5/ap/l6/bzzDAg3fkztvfQB08VBprhs9tVE-0-600-0-900-crop.jpg?v=803117c2ab"},
+    "in-bruges": {director: "Martin McDonagh", desc: "Ray and Ken, two hit men, are in Bruges, Belgium, waiting for their next mission. While they are there they have time to think and discuss their previous assignment. When the mission is revealed to Ken, it is not what he expected.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/8/0/9/47809-in-bruges-0-600-0-900-crop.jpg?v=616745d99a"},
+    "the-pianist": {director: "Roman Polanski", desc: "The true story of pianist Władysław Szpilman's experiences in Warsaw during the Nazi occupation. When the Jews of the city find themselves forced into a ghetto, Szpilman finds work playing in a café; and when his family is deported in 1942, he stays behind, works for a while as a laborer, and eventually goes into hiding in the ruins of the war-torn city.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/6/7/2/51672-the-pianist-0-600-0-900-crop.jpg?v=3eee5ac018"},
+    "a-serious-man": {director: "Joel Coen, Ethan Coen", desc: "It is 1967, and Larry Gopnik, a physics professor at a quiet Midwestern university, has just been informed by his wife Judith that she is leaving him. She has fallen in love with one of his more pompous acquaintances Sy Ableman.", poster: "https://a.ltrbxd.com/resized/sm/upload/2u/48/o1/04/kCl9WXR7LOqDTEU3XUX8ssUETQR-0-600-0-900-crop.jpg?v=c73ded0855"},
+    "yi-yi": {director: "Edward Yang", desc: "A Taipei family faces personal and moral uncertainty as everyday events test their relationships and sense of purpose.", poster: "https://a.ltrbxd.com/resized/sm/upload/7s/h0/6e/0f/hhsYCYVPy1V0eTjkGNGdvpDO2qk-0-600-0-900-crop.jpg?v=f8d5b0fe80"},
+    "apocalypto": {director: "Mel Gibson", desc: "Set in the Mayan civilization, when a man's idyllic presence is brutally disrupted by a violent invading force, he is taken on a perilous journey to a world ruled by fear and oppression where a harrowing end awaits him. Through a twist of fate and spurred by the power of his love for his woman and his family he will make a desperate break to return home and to ultimately save his way of life.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/9/5/5/50955-apocalypto-0-600-0-900-crop.jpg?v=a8148e5e1d"},
+    "collateral": {director: "Michael Mann", desc: "Cab driver Max picks up a man who offers him $600 to drive him around. But the promise of easy money sours when Max realizes his fare is an assassin.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/9/9/5/50995-collateral-0-600-0-900-crop.jpg?v=1691f38093"},
+    "children-of-men": {director: "Alfonso Cuarón", desc: "In 2027, in a chaotic world in which humans can no longer procreate, a former activist agrees to help transport a miraculously pregnant woman to a sanctuary at sea, where her child's birth may help scientists save the future of humankind.", poster: "https://a.ltrbxd.com/resized/sm/upload/ju/ac/6a/yi/lg7s7U1FQtB4VbLzvFUSgDX0frZ-0-600-0-900-crop.jpg?v=e4053ab6bf"},
+    "memento": {director: "Christopher Nolan", desc: "Leonard Shelby is tracking down the man who raped and murdered his wife. The difficulty of locating his wife's killer, however, is compounded by the fact that he suffers from a rare, untreatable form of short-term memory loss. Although he can recall details of life before his accident, Leonard cannot remember what happened fifteen minutes ago, where he's going, or why.", poster: "https://a.ltrbxd.com/resized/sm/upload/v1/3q/s4/aa/memento-0-600-0-900-crop.jpg?v=80f0732247"},
+    "there-will-be-blood": {director: "Paul Thomas Anderson", desc: "Ruthless silver miner, turned oil prospector, Daniel Plainview, moves to oil-rich California. Using his son to project a trustworthy, family-man image, Plainview cons local landowners into selling him their valuable properties for a pittance. However, local preacher Eli Sunday suspects Plainview's motives and intentions, starting a slow-burning feud that threatens both their lives.", poster: "https://a.ltrbxd.com/resized/sm/upload/jg/cd/7y/f5/there%20will%20be%20blood-0-600-0-900-crop.jpg?v=8a533d5350"},
+    "chungking-express": {director: "Wong Kar-Wai", desc: "Two melancholic Hong Kong policemen fall in love: one with a mysterious underworld figure, the other with a beautiful and ethereal server at a late-night restaurant.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/6/0/2/45602-chungking-express-0-600-0-900-crop.jpg?v=9475abb05b"},
+    "fargo": {director: "Joel Coen", desc: "Jerry, a small-town Minnesota car salesman is bursting at the seams with debt... but he's got a plan. He's going to hire two thugs to kidnap his wife in a scheme to collect a hefty ransom from his wealthy father-in-law. It's going to be a snap and nobody's going to get hurt... until people start dying. Enter Police Chief Marge, a coffee-drinking, parka-wearing - and extremely pregnant - investigator who'll stop at nothing to get her man. And if you think her small-time investigative skills will give the crooks a run for their ransom... you betcha!", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/7/8/1/51781-fargo-0-600-0-900-crop.jpg?v=44835e3b35"},
+    "shall-we-dance": {director: "Masayuki Suō", desc: "A bored accountant spots a beautiful woman in the window of a ballroom dance studio. He secretly starts taking dancing lessons to be near her, and then over time discovers how much he loves dancing. His wife, meanwhile, has hired a private detective to find out why he has started coming home late smelling of perfume.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/4/7/0/45470-shall-we-dance-1996-0-600-0-900-crop.jpg?v=0108c279d9"},
+    "2001-a-space-odyssey": {director: "Stanley Kubrick", desc: "Humanity finds a mysterious object buried beneath the lunar surface and sets off to find its origins with the help of HAL 9000, the world's most advanced super computer.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/9/8/7/51987-2001-a-space-odyssey-0-600-0-900-crop.jpg?v=a69c46a272"},
+    "being-john-malkovich": {director: "Spike Jonze", desc: "One day at work, unsuccessful puppeteer Craig finds a portal into the head of actor John Malkovich. The portal soon becomes a passion for anybody who enters its mad and controlling world of overtaking another human body.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/6/1/8/51618-being-john-malkovich-0-600-0-900-crop.jpg?v=aecbc04013"},
+    "hard-boiled": {director: "John Woo", desc: "A cop who loses his partner in a shoot-out with gun smugglers goes on a mission to catch them. In order to get closer to the leaders of the ring he joins forces with an undercover cop who's working as a gangster hitman. They use all means of excessive force to find them.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/0/1/3/45013-hard-boiled-0-600-0-900-crop.jpg?v=4bc5621882"},
+    "fallen-angels": {director: "Wong Kar-Wai", desc: "An assassin goes through obstacles as he attempts to escape his violent lifestyle despite the opposition of his partner, who is secretly attracted to him.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/4/8/9/45489-fallen-angels-0-600-0-900-crop.jpg?v=26d8dd7207"},
+    "the-usual-suspects": {director: "Bryan Singer", desc: "Held in an L.A. interrogation room, Verbal Kint attempts to convince the feds that a mythic crime lord, Keyser Soze, not only exists, but was also responsible for drawing him and his four partners into a multi-million dollar heist that ended with an explosion in San Pedro harbor – leaving few survivors. Verbal lures his interrogators with an incredible story of the crime lord's almost supernatural prowess.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/4/9/5/51495-the-usual-suspects-0-600-0-900-crop.jpg?v=c02dce5b81"},
+    "life-is-beautiful": {director: "Roberto Benigni", desc: "A touching story of an Italian book seller of Jewish ancestry who lives in his own little fairy tale. His creative and happy life would come to an abrupt halt when his entire family is deported to a concentration camp during World War II. While locked up he tries to convince his son that the whole thing is just a game.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/4/8/7/51487-life-is-beautiful-0-600-0-900-crop.jpg?v=90ed0e667e"},
+    "la-haine": {director: "Mathieu Kassovitz", desc: "After a chaotic night of rioting in a marginal suburb of Paris, three young friends, Vinz, Hubert and Saïd, wander around unoccupied waiting for news about the state of health of a mutual friend who has been seriously injured when confronting the police.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/6/8/4/51684-la-haine-0-600-0-900-crop.jpg?v=b6677cc136"},
+    "the-truman-show": {director: "Peter Weir", desc: "In a picture-perfect seaside town, an insurance salesman begins to realize that his entire existence may be staged and observed by a vast unseen audience as part of a reality TV show.", poster: "https://a.ltrbxd.com/resized/sm/upload/xx/io/jp/45/the-truman-show-0-600-0-900-crop.jpg?v=704ba393f7"},
+    "heat": {director: "Michael Mann", desc: "Obsessive master thief Neil McCauley leads a top-notch crew on various daring heists throughout Los Angeles while determined detective Vincent Hanna pursues him without rest. Each man recognizes and respects the ability and the dedication of the other even though they are aware their cat-and-mouse game may end in violence.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/9/9/4/51994-heat-0-600-0-900-crop.jpg?v=54dce97dc6"},
+    "goodfellas": {director: "Martin Scorsese", desc: "The true story of Henry Hill, a half-Irish, half-Sicilian Brooklyn kid who is adopted by neighbourhood gangsters at an early age and climbs the ranks of a Mafia family under the guidance of Jimmy Conway.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/3/8/3/51383-goodfellas-0-600-0-900-crop.jpg?v=172dbb3464"},
+    "your-mother": {director: "Bassam Tariq", desc: "Latif, a devoutly religious hitman, struggles to balance work, faith and fatherhood. When his wife dies, he embarks on a desperate journey across Houston to protect his children, confronting the forces closing in around him – and the beliefs threatening to unravel within.", poster: "https://a.ltrbxd.com/resized/film-poster/1/3/1/5/2/1/6/1315216-your-mother-your-mother-your-mother-0-600-0-900-crop.jpg?v=a644997d58"},
+    "princess-kaguya": {director: "Isao Takahata", desc: "Found inside a shining stalk of bamboo by an old bamboo cutter and his wife, a tiny girl grows rapidly into an exquisite young lady. The mysterious young princess enthrals all who encounter her. But, ultimately, she must confront her fate.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/2/9/5/6/112956-the-tale-of-the-princess-kaguya-0-600-0-900-crop.jpg?v=2f4295660e"},
+    "millennium-actress": {director: "Satoshi Kon", desc: "Documentary filmmaker Genya Tachibana has tracked down the legendary actress Chiyoko Fujiwara, who mysteriously vanished at the height of her career. When he presents her with a key she had lost and thought was gone forever, the filmmaker could not have imagined that it would not only unlock the long-held secrets of Chiyoko’s life... but also his own.", poster: "https://a.ltrbxd.com/resized/film-poster/2/9/8/8/4/29884-millennium-actress-0-600-0-900-crop.jpg?v=7c3df2e20f"},
+    "look-back": {director: "Kiyotaka Oshiyama", desc: "Popular, outgoing Fujino is celebrated by her classmates for her funny comics in the class newspaper. One day, her teacher asks her to share the space with Kyomoto, a truant recluse whose beautiful artwork sparks a competitive fervor in Fujino. What starts as jealousy transforms when Fujino realizes their shared passion for drawing.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/2/7/6/6/9/1127669-look-back-0-600-0-900-crop.jpg?v=6a67407577"},
+    "evangelion-thrice": {director: "Katsuichi Nakayama, Kazuya Tsurumaki, Mahiro Maeda, Hideaki Anno", desc: "In the aftermath of the Fourth Impact, stranded without their Evangelions, Shinji, Asuka and Rei find refuge in one of the rare pockets of humanity that still exist on the ruined planet Earth. There, each lives a life far different from their days as an Evangelion pilot. However, the danger to the world is far from over. A new impact is looming on the horizon—one that will prove to be the true end of Evangelion.", poster: "https://a.ltrbxd.com/resized/film-poster/2/0/8/8/7/7/208877-evangelion-3-0-1-0-thrice-upon-a-time-0-600-0-900-crop.jpg?v=1c02950f64"},
+    "princess-mononoke": {director: "Hayao Miyazaki", desc: "Ashitaka, a prince of the disappearing Emishi people, is cursed by a demonized boar god and must journey to the west to find a cure. Along the way, he encounters San, a young human woman fighting to protect the forest, and Lady Eboshi, who is trying to destroy it. Ashitaka must find a way to bring balance to this conflict.", poster: "https://a.ltrbxd.com/resized/sm/upload/fu/5h/fp/mj/mNqZOtJIQfFQPjo3hmYLIn8Qqhf-0-600-0-900-crop.jpg?v=aae03975f7"},
+    "the-animatrix": {director: "Yoshiaki Kawajiri, Mahiro Maeda, Shinichiro Watanabe, Takeshi Koike, Peter Chung, Koji Morimoto, Andrew R. Jones", desc: "Straight from the creators of the groundbreaking Matrix trilogy, this collection of short animated films from the world's leading anime directors fuses computer graphics and Japanese anime to provide the background of the Matrix universe and the conflict between man and machines. The shorts include Final Flight of the Osiris, The Second Renaissance, Kid's Story, Program, World Record, Beyond, A Detective Story and Matriculated.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/2/6/1/10261-the-animatrix-0-600-0-900-crop.jpg?v=83fe23ae91"},
+    "ran": {director: "Akira Kurosawa", desc: "Shakespeare's King Lear is reimagined as a singular historical epic set in sixteenth-century Japan where an aging warlord divides his kingdom between his three sons.", poster: "https://a.ltrbxd.com/resized/sm/upload/h6/yo/p7/1t/ran-0-600-0-900-crop.jpg?v=3cabb176dc"},
+    "dreams": {director: "Akira Kurosawa", desc: "Eight visually rich vignettes drawn from Kurosawa’s own dreams—fox weddings and vanished orchards, a soldier’s ghosts, a walk through Van Gogh’s canvases, nuclear nightmares, and a water-mill utopia—meditate on childhood, art, mortality, and humanity’s uneasy bond with nature.", poster: "https://a.ltrbxd.com/resized/film-poster/4/4/5/1/9/44519-dreams-0-600-0-900-crop.jpg?v=a2a17d6966"},
+    "rental-family": {director: "Hikari", desc: "An American actor in Tokyo struggles to find purpose until he lands an unusual gig: working for a Japanese 'rental family' agency, playing stand-in roles for strangers. As he immerses himself in his clients' worlds, he begins to form genuine bonds that blur the lines between performance and reality.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/9/2/7/7/8/1092778-rental-family-2025-0-600-0-900-crop.jpg?v=36ab9fb4e8"},
+    "hamnet": {director: "Chloé Zhao", desc: "The powerful story of love and loss that inspired the creation of Shakespeare's timeless masterpiece, Hamlet.", poster: "https://a.ltrbxd.com/resized/film-poster/7/7/2/2/3/2/772232-hamnet-0-600-0-900-crop.jpg?v=631489314d"},
+    "fjord": {director: "Cristian Mungiu", desc: "After the deaths of Mihai's parents, Mihai and Lisbeth Gheorghiu leave everything behind in Romania and move with their children to a remote village in Norway, hoping to rebuild their lives near Lisbeth's family. There, they grow close to their neighbors, the Halbergs, whose warmth offers the promise of a fresh start. But the fragile peace begins to unravel when the Gheorghius' young daughter, Elia, arrives at school covered in bruises.", poster: "https://a.ltrbxd.com/resized/film-poster/1/2/8/5/1/6/8/1285168-fjord-2026-0-600-0-900-crop.jpg?v=12a10d5226"},
+    "you-can-see-everything": {director: "Nathan Fielder, Lance Oppenheim", desc: "Thirty-four days before she's sent to prison, notorious Silicon Valley founder Elizabeth Holmes invites a skeptical film crew to document her every move. What begins as an intimate portrait of an enigmatic felon becomes a mind-bending three-year journey into the abyss.", poster: "https://a.ltrbxd.com/resized/film-poster/1/6/2/9/4/4/3/1629443-you-can-see-everything-0-600-0-900-crop.jpg?v=84f6724d74"},
+    "digger": {director: "Alejandro G. Iñárritu", desc: "The most powerful man in the world embarks on a frantic mission to prove he is humanity's savior before the disaster he's unleashed destroys everything.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/3/2/6/8/8/1132688-digger-2026-0-600-0-900-crop.jpg?v=81ec883a95"},
+    "the-father": {director: "Florian Zeller", desc: "A man refuses all assistance from his daughter as he ages and, as he tries to make sense of his changing circumstances, he begins to doubt his loved ones, his own mind and even the fabric of his reality.", poster: "https://a.ltrbxd.com/resized/film-poster/5/2/7/6/7/1/527671-the-father-0-600-0-900-crop.jpg?v=f343edeeb2"},
+    "wildwood": {director: "Travis Knight", desc: "Prue and her classmate Curtis are drawn into a magical forest filled with enchanted creatures, loyal allies, and formidable adversaries as they embark on a desperate quest to rescue Prue's abducted baby brother from a murder of crows led by a mysterious woman named Alexandra.", poster: "https://a.ltrbxd.com/resized/film-poster/7/0/9/4/6/0/709460-wildwood-2026-0-600-0-900-crop.jpg?v=e0b4be5769"},
+    "godzilla-minus-zero": {director: "Takashi Yamazaki", desc: "War reduced Japan to zero, and Godzilla plunged it into minus. Two years have passed since then, and the country has faced agonizing struggles to achieve recovery and finally reclaim its daily life. Just as humanity managed to cling to a hard-won peace, a new threat strikes, crushing hope in an instant. There is no third time. Everything ends here.", poster: "https://a.ltrbxd.com/resized/film-poster/1/2/6/6/6/8/4/1266684-godzilla-minus-zero-0-600-0-900-crop.jpg?v=38989be61d"},
+    "earth-is-blue": {director: "Iryna Tsilyk", desc: "Single mother Anna and her four children live in the front-line war zone of Donbas, Ukraine. While the outside world is made up of bombings and chaos, the family is managing to keep their home a safe haven, full of life and full of light. Every member of the family has a passion for cinema, motivating them to shoot a film inspired by their own life during a time of war. The creative process raises the question of what kind of power the magical world of cinema could have during times of disaster. How to picture war through fiction? For Anna and the children, transforming trauma into a work of art is the ultimate way to stay human.", poster: "https://a.ltrbxd.com/resized/film-poster/5/7/9/2/3/7/579237-the-earth-is-blue-as-an-orange-0-600-0-900-crop.jpg?v=17678c20ec"},
+    "the-tribe": {director: "Myroslav Slaboshpytskyi", desc: "Deaf-mute Sergey enters a specialized boarding school for the deaf. In navigating through the school's hierarchy, he encounters a corrupt underbelly of criminality, known as The Tribe. By participating in several robberies, he gets propelled higher into the organization, when he meets one of the Chief’s concubines Anya, and unwittingly breaks all the unwritten rules of the group.\"", poster: "https://a.ltrbxd.com/resized/film-poster/1/9/4/6/6/9/194669-the-tribe-0-600-0-900-crop.jpg?v=0aaa4aa8c8"},
+    "my-joy": {director: "Sergei Loznitsa", desc: "Georgy is driving a load of freight into Russia when, after an unpleasant encounter with the police at a border crossing, he finds himself giving a lift to a strange old man with disturbing stories about his younger days in the Army. After next picking up a young woman who works as a prostitute and is wary of the territory, Georgy finds himself lost, and despite asking some homeless men for help, he’s less sure than he was before of how to make his way back where he belongs. As brutal images of violence and alienation cross the screen, Georgy’s odyssey becomes darker and more desperate until it reaches an unexpected conclusion.", poster: "https://a.ltrbxd.com/resized/film-poster/5/6/7/8/5678-my-joy-0-600-0-900-crop.jpg?v=d09727d2ca"},
+    "crepuscule": {director: "Valentyn Vasyanovych", desc: "Maria, aged 82, and her sick son Sashko live out their days in a remote province. Sashko went blind because of serious illness. He’s afraid that his mother is dying, but Maria desperately clings to life as she realizes that no one will take care of her son. They may seem to be acting irrationally, but they are heroically unwilling to surrender. Maria buys a calf, Sashko starts to build a tractor, groping his way in the darkness…", poster: "https://a.ltrbxd.com/resized/film-poster/2/6/5/3/2/1/265321-crepuscule-0-600-0-900-crop.jpg?v=e0d016183c"},
+    "the-living-fire": {director: "Ostap Kostyuk", desc: "“Lives begin and end, but everything goes back to the earth.” A tour-de-force of cinematography and sound design, this captivating, award-winning documentary looks at three generations of sheepherders in the Carpathian Mountains. While father and son take their flock on their annual journey through the highlands, the 82-year-old widower Vasyl reflects on his past back home. A sublime look at the cycles of life and the waning of tradition.", poster: "https://a.ltrbxd.com/resized/film-poster/2/9/3/0/0/6/293006-the-living-fire-0-600-0-900-crop.jpg?v=237d2ba010"},
+    "in-the-mood-for-love": {director: "Wong Kar-Wai", desc: "Two neighbors form a strong bond after both suspect extramarital activities of their spouses. However, they agree to keep their bond platonic so as not to commit similar wrongs.", poster: "https://a.ltrbxd.com/resized/sm/upload/g1/7l/2j/qk/tSRdvZY1waXrTeMqeLBmq9IRs08-0-600-0-900-crop.jpg?v=938633fc19"},
+    "tenet": {director: "Christopher Nolan", desc: "Armed with only one word - Tenet - and fighting for the survival of the entire world, the Protagonist journeys through a twilight world of international espionage on a mission that will unfold in something beyond real time.", poster: "https://a.ltrbxd.com/resized/sm/upload/pq/9f/sr/vt/aCIFMriQh8rvhxpN1IWGgvH0Tlg-0-600-0-900-crop.jpg?v=f3165fe17f"},
+    "barry-lyndon": {director: "Stanley Kubrick", desc: "An Irish rogue uses his cunning and wit to work his way up the social classes of 18th century England, transforming himself from the humble Redmond Barry into the noble Barry Lyndon.", poster: "https://a.ltrbxd.com/resized/sm/upload/0f/r6/bn/w7/x2JQCgLjieWOwvImeGtLmuNgsrq-0-600-0-900-crop.jpg?v=9c250ee969"},
+    "1917": {director: "Sam Mendes", desc: "At the height of the First World War, two young British soldiers must cross enemy territory and deliver a message that will stop a deadly attack on hundreds of soldiers.", poster: "https://a.ltrbxd.com/resized/film-poster/4/6/0/1/5/5/460155-1917-0-600-0-900-crop.jpg?v=9eb1d95df5"},
+    "jarhead": {director: "Sam Mendes", desc: "Jarhead is a film about a US Marine Anthony Swofford’s experience in the Gulf War. After putting up with an arduous boot camp, Swofford and his unit are sent to the Persian Gulf where they are eager to fight, but are forced to stay back from the action. Swofford struggles with the possibility of his girlfriend cheating on him, and as his mental state deteriorates, his desire to kill increases.", poster: "https://a.ltrbxd.com/resized/film-poster/2/6/9/3/2693-jarhead-0-600-0-900-crop.jpg?v=f56d3e6907"},
+    "enemy": {director: "Denis Villeneuve", desc: "A mild-mannered college professor discovers a look-alike actor and delves into the other man's private affairs.", poster: "https://a.ltrbxd.com/resized/sm/upload/sj/00/0d/n1/aQkyFHzNzZoMhxZ7c0IaK8BljED-0-600-0-900-crop.jpg?v=338dcff82c"},
+    "incendies": {director: "Denis Villeneuve", desc: "A mother's last wishes send twins Jeanne and Simon on a journey to Middle East in search of their tangled roots. Adapted from Wajdi Mouawad's acclaimed play, Incendies tells the powerful and moving tale of two young adults' voyage to the core of deep-rooted hatred, never-ending wars and enduring love.", poster: "https://a.ltrbxd.com/resized/film-poster/1/8/6/2/7/18627-incendies-0-600-0-900-crop.jpg?v=428c0056f4"},
+    "the-life-aquatic": {director: "Wes Anderson", desc: "Renowned oceanographer Steve Zissou has sworn vengeance upon the rare shark that devoured a member of his crew. In addition to his regular team, he is joined on his boat by Ned, a man who believes Zissou to be his father, and Jane, a journalist pregnant by a married man. They travel the sea, all too often running into pirates and, perhaps more traumatically, various figures from Zissou's past, including his estranged wife, Eleanor.", poster: "https://a.ltrbxd.com/resized/sm/upload/lj/js/4a/zc/the-life-aquatic-with-steve-zissou-original-0-600-0-900-crop.jpg?v=c206023bc2"},
+    "asteroid-city": {director: "Wes Anderson", desc: "In an American desert town circa 1955, the itinerary of a Junior Stargazer/Space Cadet convention is spectacularly disrupted by world-changing events.", poster: "https://a.ltrbxd.com/resized/film-poster/6/6/8/5/5/5/668555-asteroid-city-0-600-0-900-crop.jpg?v=700bea7fd5"},
+    "the-french-dispatch": {director: "Wes Anderson", desc: "The staff of an American magazine based in France puts out its last issue, with stories featuring an artist sentenced to life imprisonment, student riots, and a kidnapping resolved by a chef.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/1/2/0/7/471207-the-french-dispatch-of-the-liberty-kansas-0-600-0-900-crop.jpg?v=e344a82574"},
+    "the-phoenician-scheme": {director: "Wes Anderson", desc: "Wealthy businessman Zsa-zsa Korda appoints his only daughter, a nun, as sole heir to his estate. As Korda embarks on a new enterprise, they soon become the target of scheming tycoons, foreign terrorists, and determined assassins.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/2/5/0/4/7/1025047-the-phoenician-scheme-0-600-0-900-crop.jpg?v=606059b69f"},
+    "the-irishman": {director: "Martin Scorsese", desc: "Pennsylvania, 1956. Frank Sheeran, a war veteran of Irish origin who works as a truck driver, accidentally meets mobster Russell Bufalino. Once Frank becomes his trusted man, Bufalino sends him to Chicago with the task of helping Jimmy Hoffa, a powerful union leader related to organized crime, with whom Frank will maintain a close friendship for nearly twenty years.", poster: "https://a.ltrbxd.com/resized/film-poster/3/3/3/2/0/3/333203-the-irishman-0-600-0-900-crop.jpg?v=44b0138d78"},
+    "killers-of-the-flower-moon": {director: "Martin Scorsese", desc: "When oil is discovered in 1920s Oklahoma under Osage Nation land, the Osage people are murdered one by one—until the FBI steps in to unravel the mystery.", poster: "https://a.ltrbxd.com/resized/film-poster/3/9/8/0/0/9/398009-killers-of-the-flower-moon-0-600-0-900-crop.jpg?v=49b577149d"},
+    "phantom-thread": {director: "Paul Thomas Anderson", desc: "In 1950s London, a renowned dressmaker's meticulous lifestyle begins drastically changing as his relationship with his young muse intensifies.", poster: "https://a.ltrbxd.com/resized/film-poster/3/3/5/3/8/4/335384-phantom-thread-0-600-0-900-crop.jpg?v=6b47f80ec7"},
+    "how-to-make-millions": {director: "Pat Boonnitipat", desc: "M, a university dropout low on money and luck, volunteers to take care of his terminally ill grandmother, in the hope of pocketing an inheritance.", poster: "https://a.ltrbxd.com/resized/film-poster/9/9/5/2/7/4/995274-how-to-make-millions-before-grandma-dies-0-600-0-900-crop.jpg?v=29304d20aa"},
+    "song-of-the-sea": {director: "Tomm Moore", desc: "The story of the last Seal Child’s journey home. After their mother’s disappearance, Ben and Saoirse are sent to live with Granny in the city. When they resolve to return to their home by the sea, their journey becomes a race against time as they are drawn into a world Ben knows only from his mother’s folktales. But this is no bedtime story; these fairy folk have been in our world far too long. It soon becomes clear to Ben that Saoirse is the key to their survival.", poster: "https://a.ltrbxd.com/resized/film-poster/8/8/4/8/7/88487-song-of-the-sea-0-600-0-900-crop.jpg?v=8be993ee0b"},
+    "synecdoche-new-york": {director: "Charlie Kaufman", desc: "A theater director struggles with his work, and the women in his life, as he attempts to create a life-size replica of New York inside a warehouse as part of his new play.", poster: "https://a.ltrbxd.com/resized/sm/upload/z9/j9/kx/ve/l3r5MgeN0UUySPbf6aWeUyKGdb2-0-600-0-900-crop.jpg?v=0185077fb6"},
+    "coraline": {director: "Henry Selick", desc: "Wandering her rambling old house in her boring new town, 11-year-old Coraline discovers a hidden door to a strangely idealized version of her life. In order to stay in the fantasy, she must make a frighteningly real sacrifice.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/7/7/9/42779-coraline-0-600-0-900-crop.jpg?v=b792483e2a"},
+    "fireworks": {director: "Takeshi Kitano", desc: "Beleaguered police detective Nishi takes desperate measures to try and set things right in a world gone wrong. With his wife suffering from leukemia and his business partner paralyzed from a brutal gangster attack, Nishi borrows from a yakuza loan shark and then robs a bank to clear his debt.", poster: "https://a.ltrbxd.com/resized/sm/upload/n0/te/h9/v7/55EBBrHskI3WzmAwGJwGXiSoHBH-0-600-0-900-crop.jpg?v=c32f2fc0dd"},
+    "tangerines": {director: "Zaza Urushadze", desc: "War in Abkhazia, 1992. An Estonian man Ivo has stayed behind to harvest his crops of tangerines. In a bloody conflict at his door, a wounded man is left behind, and Ivo is forced to take him in.", poster: "https://a.ltrbxd.com/resized/film-poster/1/6/7/4/1/1/167411-tangerines-0-600-0-900-crop.jpg?v=070ad10eba"},
+    "mishima": {director: "Paul Schrader", desc: "A fictional account of the life of Japanese author Yukio Mishima, combining dramatizations of three of his novels and a depiction of the events of November 25th, 1970.", poster: "https://a.ltrbxd.com/resized/film-poster/3/4/8/2/9/34829-mishima-a-life-in-four-chapters-0-600-0-900-crop.jpg?v=1bed76a9ae"},
+    "the-thing": {director: "John Carpenter", desc: "A research team in Antarctica is hunted by a shape-shifting alien that assumes the appearance of its victims.", poster: "https://a.ltrbxd.com/resized/sm/upload/t3/qn/vs/p5/s5fH3GqFcHbi2F0NSBSh4KRNTc0-0-600-0-900-crop.jpg?v=01880125bb"},
+    "rain-man": {director: "Barry Levinson", desc: "When car dealer Charlie Babbitt learns that his estranged father has died, he returns home to Cincinnati, where he discovers that he has a savant older brother named Raymond and that his father's $3 million fortune is being left to the mental institution in which Raymond lives. Motivated by his father's money, Charlie checks Raymond out of the facility in order to return with him to Los Angeles. The brothers' cross-country trip ends up changing both their lives.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/7/0/5/51705-rain-man-0-600-0-900-crop.jpg?v=f7ebcc5d4d"},
+    "once-upon-a-time-in-america": {director: "Sergio Leone", desc: "A former Prohibition-era Jewish gangster returns to the Lower East Side of Manhattan over thirty years later, where he once again must confront the ghosts and regrets of his old life.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/7/4/8/51748-once-upon-a-time-in-america-0-600-0-900-crop.jpg?v=803d65b52c"},
+    "das-boot": {director: "Wolfgang Petersen", desc: "A German submarine hunts allied ships during the Second World War, but it soon becomes the hunted. The crew tries to survive below the surface, while stretching both the boat and themselves to their limits.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/7/0/2/51702-das-boot-0-600-0-900-crop.jpg?v=353abf1303"},
+    "raging-bull": {director: "Martin Scorsese", desc: "The life of boxer Jake LaMotta, whose violence and temper that led him to the top in the ring destroyed his life outside of it.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/9/5/6/50956-raging-bull-0-600-0-900-crop.jpg?v=b25f43f7b6"},
+    "the-cremator": {director: "Juraj Herz", desc: "In 1930s Prague, a Czech cremator who firmly believes cremation relieves one from earthly suffering is drawn inexorably to Nazism.", poster: "https://a.ltrbxd.com/resized/film-poster/4/0/4/1/5/40415-the-cremator-0-600-0-900-crop.jpg?v=a7019ceedb"},
+    "lost-in-translation": {director: "Sofia Coppola", desc: "Two lost souls visiting Tokyo -- the young, neglected wife of a photographer and a washed-up movie star shooting a TV commercial -- find an odd solace and pensive freedom to be real in each other's company, away from their lives in America.", poster: "https://a.ltrbxd.com/resized/sm/upload/th/b5/6c/gl/5T8VvuFTdaawKLJk34i69Utaw7o-0-600-0-900-crop.jpg?v=ce6ae8e1b4"},
+    "anatomy-of-a-fall": {director: "Justine Triet", desc: "A woman is suspected of her husband's murder, and their blind son faces a moral dilemma as the sole witness.", poster: "https://a.ltrbxd.com/resized/film-poster/8/2/2/0/9/3/822093-anatomy-of-a-fall-0-600-0-900-crop.jpg?v=4efab8aedc"},
+    "poor-things": {director: "Yorgos Lanthimos", desc: "Brought back to life by an unorthodox scientist, a young woman runs off with a lawyer on a whirlwind adventure across the continents. Free from the prejudices of her times, she grows steadfast in her purpose to stand for equality and liberation.", poster: "https://a.ltrbxd.com/resized/film-poster/7/1/0/3/5/2/710352-poor-things-0-600-0-900-crop.jpg?v=a0f2ee9a0e"},
+    "encanto": {director: "Byron Howard, Jared Bush", desc: "The tale of an extraordinary family, the Madrigals, who live hidden in the mountains of Colombia, in a magical house, in a vibrant town, in a wondrous, charmed place called an Encanto. The magic of the Encanto has blessed every child in the family—every child except one, Mirabel. But when she discovers that the magic surrounding the Encanto is in danger, Mirabel decides that she, the only ordinary Madrigal, might just be her exceptional family's last hope.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/6/5/9/2/496592-encanto-0-600-0-900-crop.jpg?v=3fbb07bf26"},
+    "avatar-fire-and-ash": {director: "James Cameron", desc: "In the wake of the devastating war against the RDA and the loss of their eldest son, Jake Sully and Neytiri face a new threat on Pandora: the Ash People, a violent and power-hungry Na'vi tribe led by the ruthless Varang. Jake's family must fight for their survival and the future of Pandora in a conflict that pushes them to their emotional and physical limits.", poster: "https://a.ltrbxd.com/resized/film-poster/7/0/0/0/7/70007-avatar-fire-and-ash-0-600-0-900-crop.jpg?v=5d2f8b35b1"},
+    "avatar-way-of-water": {director: "James Cameron", desc: "Set more than a decade after the events of the first film, learn the story of the Sully family (Jake, Neytiri, and their kids), the trouble that follows them, the lengths they go to keep each other safe, the battles they fight to stay alive, and the tragedies they endure.", poster: "https://a.ltrbxd.com/resized/film-poster/6/3/0/5/8/63058-avatar-the-way-of-water-0-600-0-900-crop.jpg?v=cc3269e69d"},
+    "train-to-busan": {director: "Yeon Sang-ho", desc: "When a zombie virus pushes Korea into a state of emergency, those trapped on an express train to Busan must fight for their own survival.", poster: "https://a.ltrbxd.com/resized/film-poster/3/3/0/9/1/2/330912-train-to-busan-0-600-0-900-crop.jpg?v=c85e151cfe"},
+    "a-history-of-violence": {director: "David Cronenberg", desc: "An average family is thrust into the spotlight after the father commits a seemingly self-defense murder at his diner.", poster: "https://a.ltrbxd.com/resized/sm/upload/7g/wl/b8/1g/mz1qCHXxTUJm2AqOdW3IIpwYdo3-0-600-0-900-crop.jpg?v=782f3e510e"},
+    "flow": {director: "Gints Zilbalodis", desc: "A solitary cat, displaced by a great flood, finds refuge on a boat with various species and must navigate the challenges of adapting to a transformed world together.", poster: "https://a.ltrbxd.com/resized/film-poster/7/3/9/4/5/1/739451-flow-2024-0-600-0-900-crop.jpg?v=d664eca804"},
+    "the-northman": {director: "Robert Eggers", desc: "Prince Amleth is on the verge of becoming a man when his father is brutally murdered by his uncle, who kidnaps the boy's mother. Two decades later, Amleth is now a Viking who's on a mission to save his mother, kill his uncle and avenge his father.", poster: "https://a.ltrbxd.com/resized/film-poster/5/6/5/8/5/2/565852-the-northman-0-600-0-900-crop.jpg?v=8e3d277969"},
+    "all-quiet-western-front": {director: "Edward Berger", desc: "Paul Baumer and his friends Albert and Muller, egged on by romantic dreams of heroism, voluntarily enlist in the German army. Full of excitement and patriotic fervour, the boys enthusiastically march into a war they believe in. But once on the Western Front, they discover the soul-destroying horror of World War I.", poster: "https://a.ltrbxd.com/resized/film-poster/1/6/5/3/0/16530-all-quiet-on-the-western-front-0-600-0-900-crop.jpg?v=bff4d496a1"},
+    "alien-romulus": {director: "Fede Álvarez", desc: "While scavenging the deep ends of a derelict space station, a group of young space colonizers come face to face with the most terrifying life form in the universe.", poster: "https://a.ltrbxd.com/resized/film-poster/8/5/0/4/5/9/850459-alien-romulus-0-600-0-900-crop.jpg?v=acabb7fd83"},
+    "nosferatu": {director: "Robert Eggers", desc: "A gothic tale of obsession between a haunted young woman and the terrifying vampire infatuated with her, causing untold horror in its wake.", poster: "https://a.ltrbxd.com/resized/film-poster/3/5/9/5/0/5/359505-nosferatu-2024-0-600-0-900-crop.jpg?v=a12d4ad648"},
+    "28-years-later": {director: "Danny Boyle", desc: "Twenty-eight years after the Rage virus outbreak, a heavily-defended island survives connected to the mainland by a single causeway. When one of the group leaves the island into the dark heart of the mainland, he discovers secrets, wonders, and horrors that have mutated not only the infected but other survivors as well.", poster: "https://a.ltrbxd.com/resized/film-poster/9/9/2/7/8/6/992786-28-years-later-0-600-0-900-crop.jpg?v=014e09c066"},
+    "28-years-later-bone-temple": {director: "Nia DaCosta", desc: "Dr. Kelson finds himself in a shocking new relationship - with consequences that could change the world as they know it - and Spike's encounter with Jimmy Crystal becomes a nightmare he can't escape.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/5/6/4/0/9/1156409-28-years-later-the-bone-temple-0-600-0-900-crop.jpg?v=131058c6ff"},
+    "a-quiet-place-part-ii": {director: "John Krasinski", desc: "Following the events at home, the Abbott family now face the terrors of the outside world. Forced to venture into the unknown, they realize that the creatures that hunt by sound are not the only threats that lurk beyond the sand path.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/0/3/3/7/450337-a-quiet-place-part-ii-0-600-0-900-crop.jpg?v=75a12b8eec"},
+    "a-quiet-place": {director: "John Krasinski", desc: "A family is forced to live in silence while hiding from creatures that hunt by sound.", poster: "https://a.ltrbxd.com/resized/film-poster/3/7/9/6/8/7/379687-a-quiet-place-0-600-0-900-crop.jpg?v=895e756ae7"},
+    "sentimental-value": {director: "Joachim Trier", desc: "Sisters Nora and Agnes reunite with their estranged father, the charismatic Gustav, a once-renowned director who offers stage actress Nora a role in what he hopes will be his comeback film. When Nora turns it down, she soon discovers he has given her part to an eager young Hollywood star.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/1/3/3/5/7/1013357-sentimental-value-2025-0-600-0-900-crop.jpg?v=e89e64a309"},
+    "american-sniper": {director: "Clint Eastwood", desc: "U.S. Navy SEAL Chris Kyle takes his sole mission—protect his comrades—to heart and becomes one of the most lethal snipers in American history. His pinpoint accuracy not only saves countless lives but also makes him a prime target of insurgents. Despite grave danger and his struggle to be a good husband and father to his family back in the States, Kyle serves four tours of duty in Iraq. However, when he finally returns home, he finds that he cannot leave the war behind.", poster: "https://a.ltrbxd.com/resized/film-poster/1/3/7/4/7/6/137476-american-sniper-0-600-0-900-crop.jpg?v=bd4ebfac7c"},
+    "bugonia": {director: "Yorgos Lanthimos", desc: "Two conspiracy obsessed young men kidnap the high-powered CEO of a major company, convinced that she is an alien intent on destroying planet Earth.", poster: "https://a.ltrbxd.com/resized/film-poster/6/2/5/4/0/0/625400-bugonia-0-600-0-900-crop.jpg?v=4c6649150e"},
+    "the-brutalist": {director: "Brady Corbet", desc: "When an innovative modern architect flees post-war Europe, he is given the opportunity to rebuild his legacy. Set during the dawn of the modern United States (in Pennsylvania), his wife joins him, and their lives are forever changed by a demanding, wealthy patron.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/8/4/2/8/478428-the-brutalist-0-600-0-900-crop.jpg?v=2f8cae2ea5"},
+    "only-god-forgives": {director: "Nicolas Winding Refn", desc: "Julian, who runs a Thai boxing club as a front organization for his family's drug smuggling operation, is forced by his mother Crystal to find and kill the individual responsible for his brother's recent death.", poster: "https://a.ltrbxd.com/resized/film-poster/6/4/4/2/7/64427-only-god-forgives-0-600-0-900-crop.jpg?v=9f33177721"},
+    "captain-phillips": {director: "Paul Greengrass", desc: "The true story of Captain Richard Phillips and the 2009 hijacking by Somali pirates of the US-flagged MV Maersk Alabama, the first American cargo ship to be hijacked in two hundred years.", poster: "https://a.ltrbxd.com/resized/sm/upload/40/ff/o6/j6/zyYLjnmr928WDLOxGPF1fzdu7E5-0-600-0-900-crop.jpg?v=fb0b4ffe39"},
+    "kubo-and-the-two-strings": {director: "Travis Knight", desc: "Kubo mesmerizes the people in his village with his magical gift for spinning wild tales with origami. When he accidentally summons an evil spirit seeking vengeance, Kubo is forced to go on a quest to solve the mystery of his fallen samurai father and his mystical weaponry, as well as discover his own magical powers.", poster: "https://a.ltrbxd.com/resized/film-poster/2/4/0/0/6/8/240068-kubo-and-the-two-strings-0-600-0-900-crop.jpg?v=0ff2eecb8b"},
+    "dear-zachary": {director: "Kurt Kuenne", desc: "In 2001, Andrew Bagby, a medical resident, is murdered not long after breaking up with his girlfriend. Soon after, when she announces she's pregnant, one of Andrew's many close friends, Kurt Kuenne, begins this film, a gift to the child.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/2/6/0/42260-dear-zachary-a-letter-to-a-son-about-his-father-0-600-0-900-crop.jpg?v=31149d7c56"},
+    "paddington-2": {director: "Paul King", desc: "Paddington, now happily settled with the Browns, picks up a series of odd jobs to buy the perfect present for his Aunt Lucy, but it is stolen.", poster: "https://a.ltrbxd.com/resized/sm/upload/ij/ub/so/m3/zuXMvSQq9F7H29qzuUm0qyUqw6m-0-600-0-900-crop.jpg?v=a53cafc017"},
+    "paddington": {director: "Paul King", desc: "A young Peruvian bear travels to London in search of a home. Finding himself lost and alone at Paddington Station, he meets the kindly Brown family, who offer him a temporary haven.", poster: "https://a.ltrbxd.com/resized/film-poster/9/2/1/6/0/92160-paddington-0-600-0-900-crop.jpg?v=c7db8f284b"},
+    "life-of-pi": {director: "Ang Lee", desc: "The story of an Indian boy named Pi, a zookeeper's son who finds himself in the company of a hyena, zebra, orangutan, and a Bengal tiger after a shipwreck sets them adrift in the Pacific Ocean.", poster: "https://a.ltrbxd.com/resized/film-poster/7/4/3/4/8/74348-life-of-pi-0-600-0-900-crop.jpg?v=5b5f120090"},
+    "loving-vincent": {director: "Hugh Welchman, DK Welchman", desc: "A young man arrives at the last hometown of painter Vincent van Gogh to deliver the troubled artist's final letter and ends up investigating his final days there.", poster: "https://a.ltrbxd.com/resized/film-poster/2/6/9/3/5/8/269358-loving-vincent-0-600-0-900-crop.jpg?v=a66298b3b4"},
+    "the-fisher-king": {director: "Terry Gilliam", desc: "Two troubled men face their terrible destinies and events of their past as they join together on a mission to find the Holy Grail and thus to save themselves.", poster: "https://a.ltrbxd.com/resized/sm/upload/px/zw/7h/xm/pVRexLaFAQcu3NpJNAmwxLHrN7c-0-600-0-900-crop.jpg?v=4cf1269de2"},
+    "enter-the-void": {director: "Gaspar Noé", desc: "This psychedelic tour of life after death is seen entirely from the point of view of Oscar, a young American drug dealer and addict living in Tokyo with his prostitute sister, Linda. When Oscar is killed by police during a bust gone bad, his spirit journeys from the past -- where he sees his parents before their deaths -- to the present -- where he witnesses his own autopsy -- and then to the future, where he looks out for his sister from beyond the grave.", poster: "https://a.ltrbxd.com/resized/film-poster/2/9/0/4/1/29041-enter-the-void-0-600-0-900-crop.jpg?v=5a7c2754fb"},
+    "irreversible": {director: "Gaspar Noé", desc: "A woman’s lover and her ex-boyfriend take justice into their own hands after she becomes the victim of a rapist. Because some acts can’t be undone. Because man is an animal. Because the desire for vengeance is a natural impulse. Because most crimes remain unpunished.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/1/9/0/51190-irreversible-0-600-0-900-crop.jpg?v=65767926de"},
+    "possession": {director: "Andrzej Żuławski", desc: "A young woman left her family for an unspecified reason. The husband determines to find out the truth and starts following his wife. At first, he suspects that a man is involved. But gradually, he finds out more and more strange behaviors and bizarre incidents that indicate something more than a possessed love affair.", poster: "https://a.ltrbxd.com/resized/sm/upload/8c/pk/z8/4v/aIjO3kraeaD4MDBSef3rTO2vIuZ-0-600-0-900-crop.jpg?v=cb9f332628"},
+    "one-cut-of-the-dead": {director: "Shinichiro Ueda", desc: "Real zombies arrive and terrorize the crew of a zombie film being shot in an abandoned warehouse, said to be the site of military experiments on humans.", poster: "https://a.ltrbxd.com/resized/film-poster/4/4/3/0/8/6/443086-one-cut-of-the-dead-0-600-0-900-crop.jpg?v=41cb73909b"},
+    "children-of-the-sea": {director: "Ayumu Watanabe", desc: "Ruka is a young girl whose parents are separated and whose father works in an aquarium. When two boys, Umi and Sora, who were raised in the sea by dugongs, are brought to the aquarium, Ruka feels drawn to them and begins to realize that she has the same sort of supernatural connection to the ocean that they do. Umi and Sora's special power seems to be connected to strange events that have been occurring more and more frequently, such as the appearance of sea creatures far from their home territory and the disappearance of aquarium animals around the world. However, the exact nature of the boys' power and of the abnormal events is unknown, and Ruka gets drawn into investigating the mystery that surrounds her new friends.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/2/8/7/7/512877-children-of-the-sea-0-600-0-900-crop.jpg?v=4b6c2e8787"},
+    "zootopia-2": {director: "Jared Bush, Byron Howard", desc: "After cracking the biggest case in Zootopia's history, rookie cops Judy Hopps and Nick Wilde find themselves on the twisting trail of a great mystery when Gary De’Snake arrives and turns the animal metropolis upside down. To crack the case, Judy and Nick must go undercover to unexpected new parts of town, where their growing partnership is tested like never before.", poster: "https://a.ltrbxd.com/resized/film-poster/9/7/7/3/4/2/977342-zootopia-2-0-600-0-900-crop.jpg?v=00a15a97bc"},
+    "the-girl-who-leapt-through-time": {director: "Mamoru Hosoda", desc: "When 17-year-old Makoto Konno gains the ability to 'leap' backwards through time, she immediately sets about improving her grades and preventing personal mishaps. However, she soon realises that changing the past isn't as simple as it seems, and eventually, will have to rely on her new powers to shape the future of herself and her friends.", poster: "https://a.ltrbxd.com/resized/film-poster/4/3/3/7/0/43370-the-girl-who-leapt-through-time-0-600-0-900-crop.jpg?v=d3c82f50ec"},
+    "the-summit-of-the-gods": {director: "Patrick Imbert", desc: "A photojournalist's obsessive quest for the truth about the first expedition to Mt. Everest leads him to search for an esteemed climber who went missing.", poster: "https://a.ltrbxd.com/resized/film-poster/6/3/5/6/8/9/635689-the-summit-of-the-gods-0-600-0-900-crop.jpg?v=c6b0c1c510"},
+    "mary-and-max": {director: "Adam Elliot", desc: "A tale of friendship between two unlikely pen pals: Mary, a lonely, eight-year-old girl living in the suburbs of Melbourne, and Max, a forty-four-year old, severely obese man living in New York.", poster: "https://a.ltrbxd.com/resized/sm/upload/h5/ak/cq/1k/k0lQISUC4NuvKYasJn59JHc2rla-0-600-0-900-crop.jpg?v=c98c9106e5"},
+    "marcel-the-shell": {director: "Dean Fleischer Camp", desc: "Marcel is an adorable one-inch-tall shell who ekes out a colorful existence with his grandmother Connie and their pet lint, Alan. Once part of a sprawling community of shells, they now live alone as the sole survivors of a mysterious tragedy. When a documentarian discovers them amongst the clutter of his Airbnb, his resulting short film brings Marcel millions of passionate fans, as well as unprecedented dangers and a new hope at finding his long-lost family.", poster: "https://a.ltrbxd.com/resized/film-poster/7/8/1/3/2/6/781326-marcel-the-shell-with-shoes-on-0-600-0-900-crop.jpg?v=bc35f07a1c"},
+    "the-master": {director: "Paul Thomas Anderson", desc: "Freddie, a volatile, heavy-drinking veteran who suffers from post-traumatic stress disorder, finds some semblance of a family when he stumbles onto the ship of Lancaster Dodd, the charismatic leader of a new \"religion\" he forms after World War II.", poster: "https://a.ltrbxd.com/resized/film-poster/5/2/5/1/2/52512-the-master-2012-0-600-0-900-crop.jpg?v=7cac18ee61"},
+    "reservoir-dogs": {director: "Quentin Tarantino", desc: "A botched robbery indicates a police informant, and the pressure mounts in the aftermath at a warehouse. Crime begets violence as the survivors -- veteran Mr. White, newcomer Mr. Orange, psychopathic parolee Mr. Blonde, bickering weasel Mr. Pink and Nice Guy Eddie -- unravel.", poster: "https://a.ltrbxd.com/resized/sm/upload/u0/4o/op/yx/g7spS2Y4SZoQoC6Hn7zoqEqdYqR-0-600-0-900-crop.jpg?v=6d1aaa720c"},
+    "bicentennial-man": {director: "Chris Columbus", desc: "Richard Martin buys a gift, a new NDR-114 robot. The product is named Andrew by the youngest of the family's children. \"Bicentennial Man\" follows the life and times of Andrew, a robot purchased as a household appliance programmed to perform menial tasks. As Andrew begins to experience emotions and creative thought, the Martin family soon discovers they don't have an ordinary robot.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/3/6/9/50369-bicentennial-man-0-600-0-900-crop.jpg?v=644b113806"},
+    "one-hour-photo": {director: "Mark Romanek", desc: "Sy Parrish has lovingly developed photographs for the Yorkin family since their son was a baby. But as the Yorkins' lives become fuller, Sy's only seems lonelier, until he eventually convinces himself he's part of their family. When Sy's picture-perfect fantasy collides with an ugly dose of reality, a bizarre and thrilling confrontation ensues.", poster: "https://a.ltrbxd.com/resized/sm/upload/to/xo/us/q9/6ke85Kb6aX8RunZLwKpXCKYO9xv-0-600-0-900-crop.jpg?v=0b51a91c55"},
+    "save-the-green-planet": {director: "Jang Joon-hwan", desc: "A young man believes that his country's leaders are actually toxic reptilian aliens sent down to launch a takeover of his beloved Earth. So he decides to abduct them and force the truth out on camera in his basement that doubles as a film studio and torture chamber.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/4/3/6/45436-save-the-green-planet--0-600-0-900-crop.jpg?v=c42ca807e2"},
+    "assassination-of-jesse-james": {director: "Andrew Dominik", desc: "Outlaw Jesse James is rumored to be the 'fastest gun in the West'. An eager recruit into James' notorious gang, Robert Ford eventually grows jealous of the famed outlaw and, when Robert and his brother sense an opportunity to kill James, their murderous action elevates their target to near mythical status.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/2/8/8/49288-the-assassination-of-jesse-james-by-the-coward-robert-ford-0-600-0-900-crop.jpg?v=faca0b5573"},
+    "the-machinist": {director: "Brad Anderson", desc: "Trevor, an insomniac lathe operator, experiences unusual occurrences at work and home. A strange man follows him everywhere, but no one else seems to notice him.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/2/5/4/49254-the-machinist-0-600-0-900-crop.jpg?v=71a9922e95"},
+    "vagabond": {director: "Agnès Varda", desc: "Mona Bergeron is dead, her frozen body found in a ditch in the French countryside. From this, the film flashes back to the weeks leading up to her death. Through these flashbacks, Mona gradually declines as she travels from place to place, taking odd jobs and staying with whomever will offer her a place to sleep. Mona is fiercely independent, craving freedom over comfort, but it is this desire to be free that will eventually lead to her demise.", poster: "https://a.ltrbxd.com/resized/film-poster/2/1/1/4/5/21145-vagabond-0-600-0-900-crop.jpg?v=58e8e676c8"},
+    "gravity": {director: "Alfonso Cuarón", desc: "Dr Ryan Stone, an engineer on her first space mission, and Matt Kowalski, an astronaut on his final expedition, have to survive in space after they are hit by debris while spacewalking.", poster: "https://a.ltrbxd.com/resized/sm/upload/4c/kn/9m/6a/221dfc20f8690b357b6b9ad66c13b5be-0-600-0-900-crop.jpg?v=9a0ce1ad93"},
+    "moon": {director: "Duncan Jones", desc: "With only three weeks left in his three-year contract, Sam Bell is eager to return to Earth. Stationed alone at a Moon-based facility with his computer assistant GERTY, an unexpected accident sets off a series of unsettling events that shake his isolation.", poster: "https://a.ltrbxd.com/resized/sm/upload/1z/15/kh/dw/ydmC5WsPEhMZKV7VwQ8jT8hQLlc-0-600-0-900-crop.jpg?v=4343a06e20"},
+    "you-were-never-really-here": {director: "Lynne Ramsay", desc: "A traumatized veteran, unafraid of violence, tracks down missing girls for a living. When a job spins out of control, his nightmares begin to overtake him, and a conspiracy is uncovered—leading to what may be his death trip or his awakening.", poster: "https://a.ltrbxd.com/resized/film-poster/3/3/2/4/3/7/332437-you-were-never-really-here-0-600-0-900-crop.jpg?v=56e5177879"},
+    "brawl-in-cell-block-99": {director: "S. Craig Zahler", desc: "After working as a drug courier and getting into a brutal shootout with police, a former boxer finds himself at the mercy of his enemies as they force him to instigate violent acts that turn the prison he resides in into a battleground.", poster: "https://a.ltrbxd.com/resized/film-poster/3/3/2/4/3/4/332434-brawl-in-cell-block-99-0-600-0-900-crop.jpg?v=7143307f86"},
+    "natural-born-killers": {director: "Oliver Stone", desc: "Two victims of traumatized childhoods become lovers and serial murderers irresponsibly glorified by the mass media.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/8/1/5/51815-natural-born-killers-0-600-0-900-crop.jpg?v=9b5fec11e1"},
+    "battle-royale": {director: "Kinji Fukasaku", desc: "In the future, the Japanese government captures a class of ninth-grade students and forces them to kill each other under the revolutionary \"Battle Royale\" act.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/8/1/0/49810-battle-royale-0-600-0-900-crop.jpg?v=a625ba98ef"},
+    "the-boy-and-the-heron": {director: "Hayao Miyazaki", desc: "While the Second World War rages, the teenage Mahito, haunted by his mother's tragic death, is relocated from Tokyo to the serene rural home of his new stepmother Natsuko, a woman who bears a striking resemblance to the boy's mother. As he tries to adjust, this strange new world grows even stranger following the appearance of a persistent gray heron, who perplexes and bedevils Mahito, dubbing him the \"long-awaited one.\"", poster: "https://a.ltrbxd.com/resized/film-poster/4/3/8/6/9/2/438692-the-boy-and-the-heron-0-600-0-900-crop.jpg?v=521e114164"},
+    "beau-is-afraid": {director: "Ari Aster", desc: "Following the sudden death of his mother, a mild-mannered but anxiety-ridden man confronts his darkest fears as he embarks on an epic odyssey back home.", poster: "https://a.ltrbxd.com/resized/film-poster/7/1/5/8/5/6/715856-beau-is-afraid-0-600-0-900-crop.jpg?v=b5fd01665a"},
+    "videodrome": {director: "David Cronenberg", desc: "As the president of a trashy TV channel, Max Renn is desperate for new programming to attract viewers. When he happens upon \"Videodrome,\" a TV show dedicated to gratuitous torture and punishment, Max sees a potential hit and broadcasts the show on his channel. However, after his girlfriend auditions for the show and never returns, Max investigates the truth behind Videodrome and discovers that the graphic violence may not be as fake as he thought.", poster: "https://a.ltrbxd.com/resized/sm/upload/xw/sw/3v/st/o8psaYgwTYFpqJhHISoMq178J4n-0-600-0-900-crop.jpg?v=837f65a552"},
+    "under-the-skin": {director: "Jonathan Glazer", desc: "A seductive stranger prowls the streets of Glasgow in search of prey: unsuspecting men who fall under her spell.", poster: "https://a.ltrbxd.com/resized/film-poster/8/0/1/9/8/80198-under-the-skin-0-600-0-900-crop.jpg?v=732bdd03b9"},
+    "hotel-rwanda": {director: "Terry George", desc: "Inspired by true events, this film takes place in Rwanda in the 1990s when more than a million Tutsis were killed in a genocide that went mostly unnoticed by the rest of the world. Hotel owner Paul Rusesabagina houses over a thousand refuges in his hotel in attempt to save their lives.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/8/4/8/51848-hotel-rwanda-0-600-0-900-crop.jpg?v=ea46268b89"},
+    "paris-texas": {director: "Wim Wenders", desc: "A man wanders out of the desert not knowing who he is. His brother finds him, and helps to pull his memory back of the life he led before he walked out on his family and disappeared four years earlier.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/4/6/9/51469-paris-texas-0-600-0-900-crop.jpg?v=c8f2743612"},
+    "o-brother-where-art-thou": {director: "Joel Coen", desc: "In the deep south during the 1930s, three escaped convicts search for hidden treasure while a relentless lawman pursues them.", poster: "https://a.ltrbxd.com/resized/sm/upload/a0/sz/qf/mq/erBsxkzVwkXuvuzUBpVnNxxPYhO-0-600-0-900-crop.jpg?v=80375a32fa"},
+    "roma": {director: "Alfonso Cuarón", desc: "In 1970s Mexico City, two domestic workers help a mother of four while her husband is away for an extended period of time.", poster: "https://a.ltrbxd.com/resized/film-poster/3/5/9/8/5/9/359859-roma-0-600-0-900-crop.jpg?v=ad94ce0f7d"},
+    "adaptation": {director: "Spike Jonze", desc: "Charlie Kaufman is a confused L.A. screenwriter overwhelmed by feelings of inadequacy, sexual frustration, self-loathing, and by the screenwriting ambitions of his freeloading twin brother Donald. While struggling to adapt \"The Orchid Thief,\" by Susan Orlean, Kaufman's life spins from pathetic to bizarre. The lives of Kaufman, Orlean's book, become strangely intertwined as each one's search for passion collides with the others'.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/1/1/2/50112-adaptation--0-600-0-900-crop.jpg?v=5bf5496cc7"},
+    "the-tree-of-life": {director: "Terrence Malick", desc: "The impressionistic story of a Texas family in the 1950s. The film follows the life journey of the eldest son, Jack, through the innocence of childhood to his disillusioned adult years as he tries to reconcile a complicated relationship with his father. Jack finds himself a lost soul in the modern world, seeking answers to the origins and meaning of life while questioning the existence of faith.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/4/6/8/47468-the-tree-of-life-0-600-0-900-crop.jpg?v=1794f394ea"},
+    "the-act-of-killing": {director: "Joshua Oppenheimer", desc: "In this chilling and groundbreaking documentary, former Indonesian death squad leaders reenact their real-life mass killings in the style of various film genres. As they recreate their past atrocities, the line between reality and performance blurs, exposing the lingering impact of Indonesia's 1965-66 anti-communist purge and the unsettling psychology of its perpetrators.", poster: "https://a.ltrbxd.com/resized/sm/upload/kh/zg/3y/iv/the-act-of-killing-poster-0-600-0-900-crop.jpg?v=e4ab2947b8"},
+    "im-still-here": {director: "Walter Salles", desc: "A woman married to a former politician during the 1971 military dictatorship in Brazil is forced to reinvent herself and chart a new course for her family after a violent and arbitrary act.", poster: "https://a.ltrbxd.com/resized/film-poster/9/0/1/6/7/1/901671-im-still-here-2024-0-600-0-900-crop.jpg?v=62be7ea503"},
+    "wild-horse-nine": {director: "Martin McDonagh", desc: "Shortly before the 1973 Chilean coup, CIA agents Chris and Lee are dispatched from Santiago to Easter Island by their bureau chief, MJ. Amongst the Island's iconic statues, and as the longtime partners wrestle with their dark pasts and present conspiracies, Chris's newfound bond with a pair of rebellious students threatens to send everyone’s trip to this remote paradise sideways.", poster: "https://a.ltrbxd.com/resized/film-poster/8/0/2/6/3/2/802632-wild-horse-nine-0-600-0-900-crop.jpg?v=eade7a541c"},
+    "la-bola-negra": {director: "Javier Ambrossi, Javier Calvo", desc: "The intertwined lives of three men in three different eras, three lives intimately linked by sexuality and desire, pain, and legacy.", poster: "https://a.ltrbxd.com/resized/film-poster/1/3/0/2/0/3/0/1302030-la-bola-negra-0-600-0-900-crop.jpg?v=d8dd544a16"},
+    "society-of-the-snow": {director: "J. A. Bayona", desc: "On October 13, 1972, Uruguayan Air Force Flight 571, chartered to take a rugby team to Chile, crashes into a glacier in the heart of the Andes.", poster: "https://a.ltrbxd.com/resized/film-poster/8/1/3/8/4/0/813840-society-of-the-snow-0-600-0-900-crop.jpg?v=c75af7d2b8"},
+    "all-about-my-mother": {director: "Pedro Almodóvar", desc: "Following the tragic death of her teenage son, Manuela travels from Madrid to Barcelona in an attempt to contact the long-estranged father the boy never knew. She reunites with an old friend, an outspoken transgender sex worker, and befriends a troubled actress and a pregnant, HIV-positive nun.", poster: "https://a.ltrbxd.com/resized/sm/upload/b3/fr/od/2f/jopVQl2gYGPeSfEfDX9ZktlG0In-0-600-0-900-crop.jpg?v=355ee6a895"},
+    "pain-and-glory": {director: "Pedro Almodóvar", desc: "Salvador Mallo, a filmmaker in the twilight of his career, remembers his life: his mother, his lovers, the actors he worked with. The sixties in a small village in Valencia, the eighties in Madrid, the present, when he feels an immeasurable emptiness, facing his mortality, the incapability of continuing filming, the impossibility of separating creation from his own life. The need of narrating his past can be his salvation.", poster: "https://a.ltrbxd.com/resized/film-poster/4/4/8/4/4/5/448445-pain-and-glory-0-600-0-900-crop.jpg?v=3e99d7fc67"},
+    "homeward-2019": {director: "Nariman Aliev", desc: "Having lost his oldest son in the war between Russia and Ukraine, Mustafa resolves to bring the boy’s body to the land of his birth: Crimea. Together, he and his younger son set out on a journey that will profoundly mark their relationship.", poster: "https://a.ltrbxd.com/resized/film-poster/5/2/3/3/8/5/523385-homeward-0-600-0-900-crop.jpg?v=69018f6e63"},
+    "pamfir": {director: "Dmytro Sukholytkyi-Sobchuk", desc: "When reformed ex-smuggler Pamfir returns home to his village on the Ukrainian border after working abroad for several years, he’s determined to earn an honest living and set a good example for his beloved teenage son Nazar. But in a town where corruption runs deep and crime and religion are inextricably linked, his plan is quickly thwarted when Nazar sets fire to the local church in a misguided effort to keep him at home. To pay for the damage, Pamfir must take on one last job for a crime syndicate operating a risky smuggling venture in a place where all the rules have changed.", poster: "https://a.ltrbxd.com/resized/film-poster/7/6/4/9/3/2/764932-pamfir-0-600-0-900-crop.jpg?v=9ede84d572"},
+    "rock-paper-grenade": {director: "Iryna Tsilyk", desc: "A story about relationships between children and adults broken by shaky 1990s in Ukraine. The boy Tymophii befriends a weird man named Felix. He's the veteran of Afghan war, he has PTSD and he loves music.", poster: "https://a.ltrbxd.com/resized/film-poster/8/8/0/4/3/6/880436-rock-paper-grenade-0-600-0-900-crop.jpg?v=467dbae57a"},
+    "the-english-patient": {director: "Anthony Minghella", desc: "In the 1930s, Count Almásy is a Hungarian map maker employed by the Royal Geographical Society to chart the vast expanses of the Sahara Desert along with several other prominent explorers. As World War II unfolds, Almásy enters into a world of love, betrayal, and politics.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/6/8/1/51681-the-english-patient-0-600-0-900-crop.jpg?v=d3873f5c76"},
+    "babel-2006": {director: "Alejandro G. Iñárritu", desc: "Tragedy strikes a married couple vacationing in the Moroccan desert, which jumpstarts an interlocking story involving four different families.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/1/4/0/51140-babel-0-600-0-900-crop.jpg?v=8b8c66186f"},
+    "oppenheimer-2023": {director: "Christopher Nolan", desc: "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II.", poster: "https://a.ltrbxd.com/resized/film-poster/7/8/4/3/2/8/784328-oppenheimer-0-600-0-900-crop.jpg?v=e3c6e7a32c"},
+    "the-power-of-the-dog": {director: "Jane Campion", desc: "A domineering but charismatic rancher wages a war of intimidation on his brother's new wife and her teen son, until long-hidden secrets come to light.", poster: "https://a.ltrbxd.com/resized/film-poster/5/2/7/8/4/1/527841-the-power-of-the-dog-0-600-0-900-crop.jpg?v=811bdc6195"},
+    "past-lives": {director: "Celine Song", desc: "After decades apart, childhood friends Nora and Hae Sung are reunited in New York for one fateful weekend as they confront notions of destiny, love, and the choices that make a life.", poster: "https://a.ltrbxd.com/resized/film-poster/5/9/1/0/5/3/591053-past-lives-0-600-0-900-crop.jpg?v=c600b7854e"},
+    "nomadland": {director: "Chloé Zhao", desc: "A woman in her sixties embarks on a journey through the western United States after losing everything in the Great Recession, living as a van-dwelling modern-day nomad.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/9/6/6/2/509662-nomadland-0-600-0-900-crop.jpg?v=942a672158"},
+    "the-wrestler": {director: "Darren Aronofsky", desc: "Aging wrestler Randy \"The Ram\" Robinson is long past his prime but still ready and rarin' to go on the pro-wrestling circuit. After a particularly brutal beating, however, Randy hangs up his tights, pursues a serious relationship with a long-in-the-tooth stripper, and tries to reconnect with his estranged daughter. But he can't resist the lure of the ring and readies himself for a comeback.", poster: "https://a.ltrbxd.com/resized/sm/upload/ud/52/sl/57/huooRmB7yksJyVVSkqOgitxlCec-0-600-0-900-crop.jpg?v=c955e64453"},
+    "crouching-tiger-hidden-dragon": {director: "Ang Lee", desc: "Two warriors in pursuit of a stolen sword and a notorious fugitive are led to an impetuous, physically-skilled, teenage nobleman's daughter, who is at a crossroads in her life.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/9/0/5/51905-crouching-tiger-hidden-dragon-0-600-0-900-crop.jpg?v=6ce0305909"},
+    "as-good-as-it-gets": {director: "James L. Brooks", desc: "A misanthropic author, a single mother and waitress, and a gay artist form an unlikely friendship after the artist is assaulted in a robbery.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/0/2/5/50025-as-good-as-it-gets-0-600-0-900-crop.jpg?v=55174388b4"},
+    "one-flew-over-the-cuckoos-nest": {director: "Miloš Forman", desc: "A petty criminal fakes insanity to serve his sentence in a mental ward rather than prison. He soon finds himself as a leader to the other patients—and an enemy to the cruel, domineering nurse who runs the ward.", poster: "https://a.ltrbxd.com/resized/sm/upload/lf/ry/hy/2e/RHteRHXqym9f0gI4cmChbFOxD-0-600-0-900-crop.jpg?v=1e6a37509a"},
+    "the-full-monty": {director: "Peter Cattaneo", desc: "Sheffield, England. Gaz, a jobless steelworker in need of quick cash persuades his mates to bare it all in a one-night-only strip show.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/1/7/0/47170-the-full-monty-0-600-0-900-crop.jpg?v=0b85ca5b62"},
+    "conclave": {director: "Edward Berger", desc: "After the unexpected death of the Pope, Cardinal Lawrence is tasked with managing the covert and ancient ritual of electing a new one. Sequestered in the Vatican with the Catholic Church’s most powerful leaders until the process is complete, Lawrence finds himself at the center of a conspiracy that could lead to its downfall.", poster: "https://a.ltrbxd.com/resized/film-poster/8/7/7/2/5/3/877253-conclave-0-600-0-900-crop.jpg?v=f9cbf50dec"},
+    "atonement": {director: "Joe Wright", desc: "A young girl irrevocably changes the course of several lives when she accuses her older sister's lover of a crime he did not commit.", poster: "https://a.ltrbxd.com/resized/sm/upload/44/vx/ah/pc/quaWuwYZd8IbZMCOhW3CZEvyCWJ-0-600-0-900-crop.jpg?v=690eaa9389"},
+    "coda-2021": {director: "Sian Heder", desc: "As a CODA (Child of Deaf Adults), Ruby is the only hearing person in her deaf family. When the family's fishing business is threatened, Ruby finds herself torn between pursuing her love of music and her fear of abandoning her parents.", poster: "https://a.ltrbxd.com/resized/film-poster/6/9/5/4/7/3/695473-coda-0-600-0-900-crop.jpg?v=dcb6fda78d"},
+    "boiling-point": {director: "Takeshi Kitano", desc: "Masaki, a baseball player and gas-station attendant, gets into trouble with the local Yakuza and goes to Okinawa to get a gun to defend himself. There he meets Uehara, a tough gangster, who is in serious debt to the yakuza and planning revenge.", poster: "https://a.ltrbxd.com/resized/film-poster/3/4/9/2/2/34922-boiling-point-0-600-0-900-crop.jpg?v=918f2963e0"},
+    "boiling-point-2021": {director: "Philip Barantini", desc: "A head chef balances multiple personal and professional crises at a popular restaurant in London.", poster: "https://a.ltrbxd.com/resized/film-poster/7/2/4/2/2/5/724225-boiling-point-0-600-0-900-crop.jpg?v=0b18b70ab9"},
+    "at-eternitys-gate": {director: "Julian Schnabel", desc: "Famed but tormented artist Vincent van Gogh spends his final years in Arles, France, painting masterworks of the natural world that surrounds him.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/2/0/9/6/422096-at-eternitys-gate-0-600-0-900-crop.jpg?v=241172d5ef"},
+    "man-on-the-moon": {director: "Miloš Forman", desc: "The story of the life and career of eccentric avant-garde comedian, Andy Kaufman.", poster: "https://a.ltrbxd.com/resized/sm/upload/wr/un/vx/s2/i6jNmO6vynStAy23KUhOwetX6Bs-0-600-0-900-crop.jpg?v=00a4f8e1ca"},
+    "cinderella-man": {director: "Ron Howard", desc: "The true story of boxer Jim Braddock who, following his retirement in the 1930s, makes a surprise comeback in order to lift his family out of poverty.", poster: "https://a.ltrbxd.com/resized/sm/upload/nr/ar/ml/qa/4H4qkIJEN3aLf0PHRqF6fnlmhtd-0-600-0-900-crop.jpg?v=c3b2824777"},
+    "the-legend-of-ochi": {director: "Isaiah Saxon", desc: "In a remote village on the island of Carpathia, a shy farm girl named Yuri is raised to fear an elusive animal species known as ochi. But when Yuri discovers a wounded baby ochi has been left behind, she escapes on a quest to bring him home.", poster: "https://a.ltrbxd.com/resized/film-poster/8/0/7/2/3/6/807236-the-legend-of-ochi-0-600-0-900-crop.jpg?v=dfc9ebbec1"},
+    "tombstone": {director: "George P. Cosmatos", desc: "Legendary marshal Wyatt Earp, now a weary gunfighter, joins his brothers Morgan and Virgil to pursue their collective fortune in the thriving mining town of Tombstone. But Earp is forced to don a badge again and get help from his notorious pal Doc Holliday when a gang of renegade brigands and rustlers begins terrorizing the town.", poster: "https://a.ltrbxd.com/resized/film-poster/4/4/8/3/9/44839-tombstone-0-600-0-900-crop.jpg?v=7242ef82fa"},
+    "control-2007": {director: "Anton Corbijn", desc: "The story of Joy Division’s lead singer Ian Curtis, from his schoolboy days in 1973 to his suicide on the eve of the band's first American tour in 1980.", poster: "https://a.ltrbxd.com/resized/film-poster/4/8/7/1/1/48711-control-0-600-0-900-crop.jpg?v=ec852f3e51"},
+    "the-green-knight": {director: "David Lowery", desc: "An epic fantasy adventure based on the timeless Arthurian legend, The Green Knight tells the story of Sir Gawain, King Arthur's reckless and headstrong nephew, who embarks on a daring quest to confront the eponymous Green Knight, a gigantic emerald-skinned stranger and tester of men.", poster: "https://a.ltrbxd.com/resized/film-poster/4/8/8/3/9/9/488399-the-green-knight-0-600-0-900-crop.jpg?v=874a267b92"},
+    "monkey-man": {director: "Dev Patel", desc: "Kid is an anonymous young man who ekes out a meager living in an underground fight club where, night after night, wearing a gorilla mask, he is beaten bloody by more popular fighters for cash. After years of suppressed rage, Kid discovers a way to infiltrate the enclave of the city’s sinister elite. As his childhood trauma boils over, his mysteriously scarred hands unleash an explosive campaign of retribution to settle the score with the men who took everything from him.", poster: "https://a.ltrbxd.com/resized/film-poster/4/8/8/7/5/1/488751-monkey-man-0-600-0-900-crop.jpg?v=0c25a18552"},
+    "the-teacher-who-promised-the-sea": {director: "Patricia Font", desc: "The buried memories of the Spanish Civil War are unearthed as a woman searches for the remains of her grandfather's father and discovers the story of an idealistic young teacher from Tarragona.", poster: "https://a.ltrbxd.com/resized/film-poster/9/2/3/4/4/8/923448-the-teacher-who-promised-the-sea-0-600-0-900-crop.jpg?v=b04a67de87"},
+    "maquia-when-the-promised-flower-blooms": {director: "Mari Okada", desc: "Fleeing the war, the immortal Machia, graced with eternal youth, finds a baby abandoned in the forest and decides to raise it as her own child, sparking a moving story between a mortal and a being who does not age.", poster: "https://a.ltrbxd.com/resized/film-poster/4/0/7/5/3/7/407537-maquia-when-the-promised-flower-blooms-0-600-0-900-crop.jpg?v=f98f696700"},
+    "the-promised-land-2023": {director: "Nikolaj Arcel", desc: "Denmark, 1755. Captain Ludvig Kahlen sets out to conquer a Danish heath reputed to be uncultivable, with an impossible goal: to establish a colony in the name of the king, in exchange for a royal title. A single-minded ambition that the ruthless lord of the region will relentlessly seek to put down. Kahlen's fate hangs in the balance: will his endevours bring him wealth and honour, or cost him his life...?", poster: "https://a.ltrbxd.com/resized/film-poster/8/8/2/3/0/7/882307-the-promised-land-0-600-0-900-crop.jpg?v=c5a8a9a665"},
+    "casino-royale-2006": {director: "Martin Campbell", desc: "Le Chiffre, a banker to the world's terrorists, is scheduled to participate in a high-stakes poker game in Montenegro, where he intends to use his winnings to establish his financial grip on the terrorist market. M sends Bond—on his maiden mission as a 00 Agent—to attend this game and prevent Le Chiffre from winning. With the help of Vesper Lynd and Felix Leiter, Bond enters the most important poker game in his already dangerous career.", poster: "https://a.ltrbxd.com/resized/sm/upload/qb/if/j8/jr/zlWBxz2pTA9p45kUTrI8AQiKrHm-0-600-0-900-crop.jpg?v=c06add9fe8"},
+    "skyfall": {director: "Sam Mendes", desc: "When Bond's latest assignment goes gravely wrong, agents around the world are exposed and MI6 headquarters is attacked. While M faces challenges to her authority and position from Gareth Mallory, the new Chairman of the Intelligence and Security Committee, it's up to Bond, aided only by field agent Eve, to locate the mastermind behind the attack.", poster: "https://a.ltrbxd.com/resized/sm/upload/5j/ag/wy/k3/bwCC7klDpDcVtEXDK74vDzXLyeF-0-600-0-900-crop.jpg?v=3241094b0a"},
+    "quantum-of-solace": {director: "Marc Forster", desc: "Betrayed by Vesper, the woman he loved, 007 fights the urge to make his latest mission personal. Pursuing his determination to uncover the truth, Bond and M interrogate Mr. White, who reveals that the organization that blackmailed Vesper is far more complex and dangerous than anyone had imagined.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/9/1/8/45918-quantum-of-solace-0-600-0-900-crop.jpg?v=0f9d245225"},
+    "spectre-2015": {director: "Sam Mendes", desc: "A cryptic message from Bond’s past sends him on a trail to uncover a sinister organization. While M battles political forces to keep the secret service alive, Bond peels back the layers of deceit to reveal the terrible truth behind SPECTRE.", poster: "https://a.ltrbxd.com/resized/sm/upload/z4/ic/gk/3h/1o9prR1gAZdF9KpxH4qneJ3Rglf-0-600-0-900-crop.jpg?v=bee769afd4"},
+    "no-time-to-die-2021": {director: "Cary Joji Fukunaga", desc: "Bond has left active service and is enjoying a tranquil life in Jamaica. His peace is short-lived when his old friend Felix Leiter from the CIA turns up asking for help. The mission to rescue a kidnapped scientist turns out to be far more treacherous than expected, leading Bond onto the trail of a mysterious villain armed with dangerous new technology.", poster: "https://a.ltrbxd.com/resized/film-poster/3/0/5/9/6/4/305964-no-time-to-die-0-600-0-900-crop.jpg?v=4651ce5b05"},
+    "riders-of-justice": {director: "Anders Thomas Jensen", desc: "Markus returns home to care for his daughter when his wife dies in a tragic train accident. However, when a survivor of the wreck surfaces and claims foul play, Markus suspects his wife was murdered and embarks on a mission to find those responsible.", poster: "https://a.ltrbxd.com/resized/film-poster/5/8/8/8/4/0/588840-riders-of-justice-0-600-0-900-crop.jpg?v=1e4b4ddaa9"},
+    "taste-of-cherry": {director: "Abbas Kiarostami", desc: "A middle-aged Tehranian man, Mr. Badii is intent on killing himself and seeks someone to bury him after his demise. Driving around the city, the seemingly well-to-do Badii meets with numerous people, including a Muslim student, asking them to take on the job, but initially he has little luck. Eventually, Badii finds a man who is up for the task because he needs the money, but his new associate soon tries to talk him out of committing suicide.", poster: "https://a.ltrbxd.com/resized/film-poster/3/2/3/4/5/32345-taste-of-cherry-0-600-0-900-crop.jpg?v=64fada0a9a"},
+    "deep-cover": {director: "Bill Duke", desc: "Black police officer Russell Stevens applies for a special anti-drug squad which targets the highest boss of cocaine delivery to LA—the Colombian foreign minister's nephew. Russell works his way up from the bottom undercover, until he reaches the boss.", poster: "https://a.ltrbxd.com/resized/film-poster/3/8/8/5/7/38857-deep-cover-0-600-0-900-crop.jpg?v=8ada747a67"},
+    "the-foreigner-2017": {director: "Martin Campbell", desc: "Quan is a humble London businessman whose long-buried past erupts in a revenge-fueled vendetta when the only person left for him to love – his teenage daughter – dies in an Irish Republican Army car bombing. His relentless search to find the terrorists leads to a cat-and-mouse conflict with a British government official whose own past may hold the clues to the identities of the elusive killers.", poster: "https://a.ltrbxd.com/resized/film-poster/3/1/4/3/8/5/314385-the-foreigner-0-600-0-900-crop.jpg?v=f0f36a4bef"},
+    "the-shadows-edge-2025": {director: "Larry Yang", desc: "Macau Police brings the tracking expert police officer out of retirement to help catch a dangerous group of professional thieves.", poster: "https://a.ltrbxd.com/resized/film-poster/1/2/9/9/9/5/8/1299958-the-shadows-edge-2025-0-600-0-900-crop.jpg?v=ebfe9e9274"},
+    "pusher": {director: "Nicolas Winding Refn", desc: "A drug pusher grows increasingly desperate after a botched deal leaves him with a large debt to a ruthless drug lord.", poster: "https://a.ltrbxd.com/resized/sm/upload/r0/7x/rh/jz/auG6gLxJwl2SkQpnfLqR5WFoqOa-0-600-0-900-crop.jpg?v=60ba7d7d0f"},
+    "bleeder": {director: "Nicolas Winding Refn", desc: "Two stories for the price of one: a video store clerk tries to get acquainted with a waitress; a man beats his pregnant wife, unaware that her brother is a violent racist.", poster: "https://a.ltrbxd.com/resized/film-poster/4/0/6/5/0/40650-bleeder-0-600-0-900-crop.jpg?v=0492d93cbf"},
+    "pusher-ii": {director: "Nicolas Winding Refn", desc: "Tonny is released from prison - again. This time he has his mind set on changing his broken down life, but that is easier said than done.", poster: "https://a.ltrbxd.com/resized/sm/upload/rz/wz/st/bn/gfa7STxdOTqAWijSytswpdT535I-0-600-0-900-crop.jpg?v=d1238a7249"},
+    "adams-apples": {director: "Anders Thomas Jensen", desc: "A neo-nazi sentenced to community service at a church clashes with the blindly devotional priest.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/1/7/0/51170-adams-apples-0-600-0-900-crop.jpg?v=67a64bca65"},
+    "the-seed-of-the-sacred-fig": {director: "Mohammad Rasoulof", desc: "Investigating judge Iman grapples with paranoia amid political unrest in Tehran. When his gun vanishes, he suspects his wife and daughters, imposing draconian measures that strain family ties as societal rules crumble.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/6/1/8/0/6/1161806-the-seed-of-the-sacred-fig-0-600-0-900-crop.jpg?v=93abc60195"},
+    "this-is-england": {director: "Shane Meadows", desc: "A story about a troubled boy growing up in England, set in 1983. He comes across a few skinheads on his way home from school, after a fight. They become his new best friends, even like family. Based on experiences of director Shane Meadows.", poster: "https://a.ltrbxd.com/resized/film-poster/4/5/0/0/0/45000-this-is-england-0-600-0-900-crop.jpg?v=9e9b935ac3"},
+    "close-up": {director: "Abbas Kiarostami", desc: "This fiction-documentary hybrid uses a sensational real-life event—the arrest of a young man on charges that he fraudulently impersonated the well-known filmmaker Mohsen Makhmalbaf—as the basis for a stunning, multilayered investigation into movies, identity, artistic creation, and existence, in which the real people from the case play themselves.", poster: "https://a.ltrbxd.com/resized/sm/upload/t8/k4/3s/ts/xrgd24H2WnZVeiWDnnJxHkC7UVY-0-600-0-900-crop.jpg?v=8ef4459add"},
+    "dog-day-afternoon": {director: "Sidney Lumet", desc: "Based on the true story of would-be Brooklyn bank robbers John Wojtowicz and Salvatore Naturile. Sonny and Sal attempt a bank heist which quickly turns sour and escalates into a hostage situation and stand-off with the police. As Sonny's motives for the robbery are slowly revealed and things become more complicated, the heist turns into a media circus.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/1/9/5/51195-dog-day-afternoon-0-600-0-900-crop.jpg?v=dcce1e7cbb"},
+    "made-in-hong-kong": {director: "Fruit Chan", desc: "Hong Kong 1997, where young people dream of love and death, suicide and murder. Moon is a cynical young debt collector, smitten by Ping, a young woman dying of kidney disease. A suicide note from a student they don't know ends up intertwining their fates.", poster: "https://a.ltrbxd.com/resized/film-poster/3/5/6/2/1/35621-made-in-hong-kong-0-600-0-900-crop.jpg?v=0d782628d2"},
+    "the-taste-of-tea": {director: "Katsuhito Ishii", desc: "A spell of time in the life of a family in rural Tochigi prefecture. Yoshiko is not an ordinary housewife, instead working on an animated film project. Uncle Ayano, a successful music producer, is looking to get his head together after living in Tokyo. Meanwhile, Sachiko is concerned with why she seems to be followed by a giant version of herself. As the lazy days pass by, each member of the family is followed in a series of episodic vignettes.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/4/5/9/42459-the-taste-of-tea-0-600-0-900-crop.jpg?v=e6ebb5f211"},
+    "la-chimera": {director: "Alice Rohrwacher", desc: "Just out of jail, rumpled English archaeologist Arthur reconnects with his wayward crew of tombaroli accomplices – a happy-go-lucky collective of itinerant grave-robbers who survive by looting Etruscan tombs and fencing the ancient treasures they dig up.", poster: "https://a.ltrbxd.com/resized/film-poster/7/5/2/6/2/6/752626-la-chimera-0-600-0-900-crop.jpg?v=8f8cf76e33"},
+    "big-fish": {director: "Tim Burton", desc: "Throughout his life Edward Bloom has always been a man of big appetites, enormous passions and tall tales. In his later years, he remains a huge mystery to his son, William. Now, to get to know the real man, Will begins piecing together a true picture of his father from flashbacks of his amazing adventures.", poster: "https://a.ltrbxd.com/resized/sm/upload/w2/v9/2v/lv/6DRFdlNZpAaEt7eejsbAlJGgaM7-0-600-0-900-crop.jpg?v=89bfbcf64e"},
+    "monster-2023": {director: "Hirokazu Kore-eda", desc: "After an outburst at school involving her son, a concerned single mother demands answers, triggering a sequence of deepening suspicion and turmoil.", poster: "https://a.ltrbxd.com/resized/film-poster/9/4/7/0/3/0/947030-monster-0-600-0-900-crop.jpg?v=9787f75532"},
+    "dark-city-1998": {director: "Alex Proyas", desc: "A man struggles with memories of his past, including a wife he cannot remember, in a nightmarish world with no sun and run by beings with telekinetic powers who seek the souls of humans.", poster: "https://a.ltrbxd.com/resized/film-poster/5/0/1/6/0/50160-dark-city-0-600-0-900-crop.jpg?v=2627eaaa53"},
+    "mother-2009": {director: "Bong Joon Ho", desc: "A mother lives quietly with her son. One day, a girl is brutally killed, and the boy is charged with the murder. Now, it's his mother's mission to prove him innocent.", poster: "https://a.ltrbxd.com/resized/sm/upload/d9/ak/bf/ux/mHdlmzflukTX2a2w6rwOkCix34v-0-600-0-900-crop.jpg?v=81bd682d39"},
+    "angels-egg": {director: "Mamoru Oshii", desc: "In the ruins of a strange city, a young girl takes care of a large egg she holds carefully in her arms. She bonds with a boy who is searching for a bird he saw in a dream.", poster: "https://a.ltrbxd.com/resized/film-poster/4/1/9/9/0/41990-angel-s-egg-0-600-0-900-crop.jpg?v=98f9bf2def"},
+    "patlabor-2-the-movie": {director: "Mamoru Oshii", desc: "A Japanese police unit who use giant anthropomorphic robots (called Labors) is caught up in a political struggle between the civilian authorities and the military when a terrorist act is blamed on an Air Force jet. With the aid of a government agent, the team gets close to a terrorist leader to stop things from going out of control when after the military is impelled to impose martial law.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/9/8/5/42985-patlabor-2-the-movie-0-600-0-900-crop.jpg?v=9e12cbe7eb"},
+    "patlabor-the-movie": {director: "Mamoru Oshii", desc: "A mysterious suicide and a series of unmanned robot run-aways sparks off a Police investigation into the suspicious software on-board thousands of industrial robots around Tokyo.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/9/8/6/42986-patlabor-the-movie-0-600-0-900-crop.jpg?v=c2f4032da5"},
+    "nirvanna-the-band-the-show-the-movie": {director: "Matt Johnson", desc: "When their plan to book a show at the Rivoli goes horribly wrong, Matt and Jay accidentally travel back to the year 2008.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/4/1/0/1/2/1041012-nirvanna-the-band-the-show-the-movie-0-600-0-900-crop.jpg?v=4d80f82f8a"},
+    "310-to-yuma-2007": {director: "James Mangold", desc: "In Arizona in the late 1800s, infamous outlaw Ben Wade and his vicious gang of thieves and murderers have plagued the Southern Railroad. When Wade is captured, Civil War veteran Dan Evans, struggling to survive on his drought-plagued ranch, volunteers to deliver him alive to the \"3:10 to Yuma\", a train that will take the killer to trial.", poster: "https://a.ltrbxd.com/resized/film-poster/4/8/9/1/8/48918-3-10-to-yuma-0-600-0-900-crop.jpg?v=c068c05bb2"},
+    "dunkirk-2017": {director: "Christopher Nolan", desc: "The story of the miraculous evacuation of Allied soldiers from Belgium, Britain, Canada and France, who were cut off and surrounded by the German army from the beaches and harbour of Dunkirk between May 26th and June 4th 1940 during World War II.", poster: "https://a.ltrbxd.com/resized/sm/upload/md/nb/pu/3i/bOXBV303Fgkzn2K4FeKDc0O31q4-0-600-0-900-crop.jpg?v=7307b1ff5b"},
+    "number-24": {director: "John Andreas Andersen", desc: "On the brink of the Second World War, a young Norwegian man's drive to resist the Nazis sets a new course for his future – and the future of his country.", poster: "https://a.ltrbxd.com/resized/film-poster/1/1/0/5/8/9/5/1105895-number-24-0-600-0-900-crop.jpg?v=e7ca84c935"},
+    "the-captain-2017": {director: "Robert Schwentke", desc: "Germany, 1945. Soldier Willi Herold, a deserter of the German army, stumbles into a uniform of Nazi captain abandoned during the last and desperate weeks of the Third Reich. Newly emboldened by the allure of a suit that he has stolen only to stay warm, Willi discovers that many Germans will follow the leader, whoever he is.", poster: "https://a.ltrbxd.com/resized/film-poster/4/0/6/0/7/8/406078-the-captain-0-600-0-900-crop.jpg?v=dbb67e9df2"},
+    "land-of-mine": {director: "Martin Zandvliet", desc: "In the days following the surrender of Germany in May 1945, a group of young German prisoners of war is handed over to the Danish authorities and subsequently sent to the West Coast, where they are ordered to remove the more than two million mines that the Germans had placed in the sand along the coast. With their bare hands, crawling around in the sand, the boys are forced to perform the dangerous work under the leadership of a Danish sergeant.", poster: "https://a.ltrbxd.com/resized/sm/upload/5n/to/nb/2b/zrYvQwyNH3raqJtviY0Ny0vKo2J-0-600-0-900-crop.jpg?v=3ee82cffd1"},
+    "paradise-now": {director: "Hany Abu-Assad", desc: "Two childhood friends are recruited for a suicide bombing in Tel Aviv.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/9/8/2/51982-paradise-now-0-600-0-900-crop.jpg?v=69a9c76043"},
+    "no-mans-land-2001": {director: "Danis Tanović", desc: "Two soldiers from opposite sides get stuck between the front lines in the same trench. The UN is asked to free them and both sides agree on a ceasefire, but will they stick to it?", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/7/9/4/47794-no-man-s-land-0-600-0-900-crop.jpg?v=87b0567188"},
+    "good-morning-vietnam": {director: "Barry Levinson", desc: "A disk jockey goes to Vietnam to work for the Armed Forces Radio Service. While he becomes popular among the troops, his superiors disapprove of his humor.", poster: "https://a.ltrbxd.com/resized/sm/upload/s8/9y/90/23/62Ve2yREvobU0qo4DxdSrShh1YO-0-600-0-900-crop.jpg?v=9ac944e058"},
+    "kneecap": {director: "Rich Peppiatt", desc: "When fate brings Belfast teacher JJ into the orbit of self-confessed \"low life scum\" Naoise and Liam Óg, the needle drops on a hip-hop act like no other. Rapping in their native Irish, they lead a movement to save their mother tongue.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/6/6/9/1/9/1066919-kneecap-0-600-0-900-crop.jpg?v=7df27a9a20"},
+    "columbus-2017": {director: "Kogonada", desc: "When a renowned architecture scholar falls suddenly ill during a speaking tour, his son Jin finds himself stranded in Columbus, Indiana - a small Midwestern city celebrated for its many significant modernist buildings. Jin strikes up a friendship with Casey, a young architecture enthusiast who works at the local library.", poster: "https://a.ltrbxd.com/resized/sm/upload/l1/zo/7p/wc/3ZE5Wl3CdfUH4BkWRmyMKPHkWHx-0-600-0-900-crop.jpg?v=800e4a6439"},
+    "the-raid-2": {director: "Gareth Evans", desc: "After fighting his way through an apartment building populated by an army of dangerous criminals and escaping with his life, SWAT team member Rama goes undercover, joining a powerful Indonesian crime syndicate to protect his family and uncover corrupt members of his own force.", poster: "https://a.ltrbxd.com/resized/film-poster/1/3/0/9/1/3/130913-the-raid-2-0-600-0-900-crop.jpg?v=989683bacc"},
+    "the-raid-2011": {director: "Gareth Evans", desc: "Deep in the heart of Jakarta's slums lies an impenetrable safe house for the world's most dangerous killers and gangsters. Until now, the run-down apartment block has been considered untouchable to even the bravest of police. Cloaked under the cover of pre-dawn darkness and silence, an elite swat team is tasked with raiding the safe house in order to take down the notorious drug lord that runs it. But when a chance encounter with a spotter blows their cover and news of their assault reaches the drug lord, the building's lights are cut and all the exits blocked. Stranded on the sixth floor with no way out, the unit must fight their way through the city's worst to survive their mission. Starring Indonesian martial arts sensation Iko Uwais.", poster: "https://a.ltrbxd.com/resized/film-poster/7/8/2/6/6/78266-the-raid-0-600-0-900-crop.jpg?v=4095a2a23a"},
+    "silence": {director: "Martin Scorsese", desc: "In the 17th century, two Portuguese Jesuit priests travel to Japan in an attempt to locate their mentor, who is rumored to have committed apostasy, and to propagate Catholicism.", poster: "https://a.ltrbxd.com/resized/film-poster/5/2/5/0/4/52504-silence-0-600-0-900-crop.jpg?v=b1740fd4a3"},
+    "good-bye-lenin": {director: "Wolfgang Becker", desc: "Alex Kerner's mother was in a coma while the Berlin wall fell. When she wakes up he must try to keep her from learning what happened (as she was an avid communist supporter) to avoid shocking her which could lead to another heart attack.", poster: "https://a.ltrbxd.com/resized/film-poster/5/1/7/2/4/51724-good-bye-lenin--0-600-0-900-crop.jpg?v=85e5ac1c04"},
+    "lady-vengeance": {director: "Park Chan-wook", desc: "Released after being wrongfully convicted and imprisoned for 13 years, a woman begins executing her elaborate plan of retribution.", poster: "https://a.ltrbxd.com/resized/film-poster/4/9/2/5/7/49257-lady-vengeance-0-600-0-900-crop.jpg?v=08caa7fc94"},
+    "werckmeister-harmonies": {director: "Béla Tarr", desc: "A naive young man witnesses an escalation of violence in his small hometown following the arrival of a mysterious circus attraction.", poster: "https://a.ltrbxd.com/resized/film-poster/3/7/5/0/7/37507-werckmeister-harmonies-0-600-0-900-crop.jpg?v=f9d3a76d01"},
+    "the-thin-red-line": {director: "Terrence Malick", desc: "The story of a group of men, an Army Rifle company called C-for-Charlie, who change, suffer, and ultimately make essential discoveries about themselves during the fierce World War II battle of Guadalcanal. It follows their journey, from the surprise of an unopposed landing, through the bloody and exhausting battles that follow, to the ultimate departure of those who survived.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/6/2/7/47627-the-thin-red-line-0-600-0-900-crop.jpg?v=996c013c41"},
+    "gia": {director: "Michael Cristofer", desc: "Gia Carangi meteorically rises to modeling fame in the late 1970s but becomes overconsumed by persistent loneliness and drug addiction.", poster: "https://a.ltrbxd.com/resized/film-poster/4/3/0/1/8/43018-gia-0-600-0-900-crop.jpg?v=edd11ef917"},
+    "nebraska": {director: "Alexander Payne", desc: "An aging, booze-addled father takes a trip from Montana to Nebraska with his estranged son in order to claim what he believes to be a million-dollar sweepstakes prize.", poster: "https://a.ltrbxd.com/resized/film-poster/1/0/0/9/2/0/100920-nebraska-0-600-0-900-crop.jpg?v=d40cd8dc17"},
+    "beau-travail": {director: "Claire Denis", desc: "Foreign Legion officer Galoup recalls his once glorious life, training troops in the Gulf of Djibouti. His existence there was happy, strict and regimented, until the arrival of a promising young recruit, Sentain, plants the seeds of jealousy in Galoup's mind.", poster: "https://a.ltrbxd.com/resized/film-poster/4/2/9/4/2/42942-beau-travail-0-600-0-900-crop.jpg?v=a0e83a5f78"},
+    "king-of-new-york": {director: "Abel Ferrara", desc: "A former drug lord returns from prison determined to wipe out all his competition and distribute the profits of his operations to New York's poor and lower classes in this stylish and ultra violent modern twist on Robin Hood.", poster: "https://a.ltrbxd.com/resized/film-poster/4/7/0/4/2/47042-king-of-new-york-0-600-0-900-crop.jpg?v=ef72bff72d"},
+    "petite-maman": {director: "Céline Sciamma", desc: "After the death of her beloved grandmother, eight-year-old Nelly meets a strangely familiar girl her own age in the woods. Instantly forming a connection with this mysterious new friend, Nelly embarks on a fantastical journey of discovery which helps her come to terms with this newfound loss.", poster: "https://a.ltrbxd.com/resized/film-poster/6/6/9/7/4/4/669744-petite-maman-0-600-0-900-crop.jpg?v=c7cbed5a06"},
+    "oslo-august-31st": {director: "Joachim Trier", desc: "A recovering drug addict is granted a day’s leave from rehab and returns to Oslo, where he reconnects with friends, faces the weight of his past, and struggles with uncertainty about his future. Over the course of one day, he drifts through encounters that reflect his longing for connection and his deep sense of alienation.", poster: "https://a.ltrbxd.com/resized/sm/upload/e6/m1/vn/g6/nitgCJ1g0ebztZHG0KwcojWlyPA-0-600-0-900-crop.jpg?v=d5466d278c"},
+  };
+
+  const KEY = "watchlist.films.v1";
+  const list = document.getElementById("list");
+  const empty = document.getElementById("empty");
+  const q = document.getElementById("q");
+  const sortBy = document.getElementById("sortBy");
+  const filters = [...document.querySelectorAll("#stateFilters .btn")];
+
+  let watched = new Set();
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || "[]");
+    const valid = new Set(FILMS.map(f => f.id));
+    watched = new Set(raw.filter(id => valid.has(id)));
+  } catch (_) { watched = new Set(); }
+
+  let state = "all";
+  let term = "";
+  let sort = "default";
+  let view = "list";
+  let picked = null;
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify([...watched])); } catch (_) {}
+  }
+
+  function runtime(m){
+    if(!m) return "--h:--m:--s";
+    const h = Math.floor(m / 60), r = m % 60;
+    return String(h).padStart(2, "0") + "h:" + String(r).padStart(2, "0") + "m:00s";
+  }
+
+  function ordered(){
+    const arr = FILMS.slice();
+    const byTitle = (a, b) => a.title.localeCompare(b.title);
+    if(sort === "title") arr.sort(byTitle);
+    else if(sort === "year-desc") arr.sort((a, b) => b.year - a.year || byTitle(a, b));
+    else if(sort === "year-asc") arr.sort((a, b) => a.year - b.year || byTitle(a, b));
+    else if(sort === "time-asc") arr.sort((a, b) => (a.min || 1e4) - (b.min || 1e4) || byTitle(a, b));
+    else if(sort === "time-desc") arr.sort((a, b) => (b.min || -1) - (a.min || -1) || byTitle(a, b));
+    return arr;
+  }
+
+  function render(){
+    const grid = view === "grid";
+    list.classList.toggle("is-grid", grid);
+    list.innerHTML = ordered().map((f, i) => {
+      const d = DETAILS[f.id] || {};
+      const name = `<span class="film__title">${esc(f.title)}</span> ` +
+        (f.uk ? `<span class="film__uk">${esc(f.uk)}</span>` : "");
+      const poster = grid && d.poster
+        ? `<span class="film__poster"><img src="${esc(d.poster.replace("-0-600-0-900-crop", "-0-300-0-450-crop"))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`
+        : "";
+      const nameTag = grid
+        ? `<span class="film__name">${name}</span>`
+        : `<button class="film__open" type="button" data-id="${f.id}" aria-haspopup="dialog">${name}</button>`;
+      return `
+      <li class="film" id="row-${f.id}" data-id="${f.id}" data-search="${(f.title + " " + (f.uk || "") + " " + f.year).toLowerCase()}">
+        <input class="film__check" type="checkbox" id="film-${i}" data-id="${f.id}" aria-label="Mark ${esc(f.title)} watched">
+        ${poster}
+        <label class="film__boxlabel" for="film-${i}"><span class="film__box" aria-hidden="true"></span></label>
+        <div class="film__main">
+          ${nameTag}
+          <span class="film__sub">${f.year} <i>·</i> <b>${runtime(f.min)}</b></span>
+        </div>
+        <a class="film__link" href="${esc(f.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(f.title)}">↗</a>
+      </li>`;
+    }).join("");
+    sync();
+    if(picked){
+      const row = list.querySelector('.film[data-id="' + picked.id + '"]');
+      if(row) row.classList.add("is-picked");
+    }
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  }
+
+  function sync(){
+    const total = FILMS.length;
+    const n = watched.size;
+    document.getElementById("totalCount").textContent = total;
+    document.getElementById("watchedCount").textContent = n;
+    const pct = total ? Math.round((n / total) * 100) : 0;
+    document.getElementById("percent").textContent = pct + "%";
+    document.getElementById("remaining").textContent = total - n;
+    document.getElementById("progressBar").style.width = pct + "%";
+    const track = document.getElementById("progressTrack");
+    track.setAttribute("aria-valuenow", String(n));
+    track.setAttribute("aria-valuemax", String(total));
+
+    list.querySelectorAll(".film").forEach(el => {
+      const isWatched = watched.has(el.dataset.id);
+      el.classList.toggle("is-watched", isWatched);
+      const cb = el.querySelector(".film__check");
+      if(cb) cb.checked = isWatched;
+    });
+    apply();
+  }
+
+  function apply(){
+    let visible = 0;
+    list.querySelectorAll(".film").forEach(el => {
+      const isWatched = watched.has(el.dataset.id);
+      const stateOK = state === "all" || (state === "watched" ? isWatched : !isWatched);
+      const termOK = !term || el.dataset.search.includes(term);
+      el.hidden = !(stateOK && termOK);
+      if(!el.hidden) visible++;
+    });
+    empty.classList.toggle("is-on", visible === 0);
+  }
+
+  list.addEventListener("change", e => {
+    const cb = e.target.closest(".film__check");
+    if(!cb) return;
+    if(cb.checked) watched.add(cb.dataset.id); else watched.delete(cb.dataset.id);
+    save(); sync();
+  });
+
+  /* film details */
+  const dialog = document.getElementById("filmDialog");
+  const dialogPoster = document.getElementById("dialogPoster");
+  const dialogTitle = document.getElementById("dialogTitle");
+  const dialogUk = document.getElementById("dialogUk");
+  const dialogMeta = document.getElementById("dialogMeta");
+  const dialogDesc = document.getElementById("dialogDesc");
+  const dialogLink = document.getElementById("dialogLink");
+
+  list.addEventListener("click", e => {
+    const open = e.target.closest(".film__open");
+    if(!open) return;
+    const film = FILMS.find(f => f.id === open.dataset.id);
+    if(!film) return;
+    const d = DETAILS[film.id] || {};
+    dialogTitle.textContent = film.title;
+    dialogUk.textContent = film.uk || "";
+    dialogUk.hidden = !film.uk;
+    dialogMeta.innerHTML = film.year + " · " + runtime(film.min) +
+      (d.director ? " · Directed by <b>" + esc(d.director) + "</b>" : "");
+    dialogDesc.textContent = d.desc || "";
+    dialogDesc.hidden = !d.desc;
+    if(d.poster){
+      dialogPoster.src = d.poster;
+      dialogPoster.alt = "Poster for " + film.title;
+      dialogPoster.hidden = false;
+    } else {
+      dialogPoster.removeAttribute("src");
+      dialogPoster.alt = "";
+      dialogPoster.hidden = true;
+    }
+    dialogLink.href = film.url;
+    dialog.showModal();
+  });
+
+  document.getElementById("dialogClose").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", e => { if(e.target === dialog) dialog.close(); });
+
+  filters.forEach(btn => btn.addEventListener("click", () => {
+    filters.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+    state = btn.dataset.state;
+    apply();
+  }));
+
+  sortBy.addEventListener("change", () => {
+    sort = sortBy.value;
+    render();
+  });
+
+  let timer;
+  q.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { term = q.value.trim().toLowerCase(); apply(); }, 70);
+  });
+  q.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ q.value = ""; term = ""; apply(); q.blur(); }
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "/" && document.activeElement !== q && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){
+      e.preventDefault(); q.focus();
+    }
+  });
+
+  /* theme */
+  const themeBtn = document.getElementById("themeBtn");
+  const TKEY = "watchlist.theme.v1";
+  function setTheme(t){
+    document.documentElement.dataset.theme = t;
+    themeBtn.textContent = "theme: " + t;
+    try { localStorage.setItem(TKEY, t); } catch (_) {}
+  }
+  let theme = "dark";
+  try {
+    theme = localStorage.getItem(TKEY) ||
+      (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  } catch (_) {}
+  setTheme(theme);
+  themeBtn.addEventListener("click", () => setTheme(theme = theme === "dark" ? "light" : "dark"));
+
+  /* view: list / grid */
+  const viewBtn = document.getElementById("viewBtn");
+  const VKEY = "watchlist.view.v1";
+  try {
+    const saved = localStorage.getItem(VKEY);
+    if(saved === "grid" || saved === "list") view = saved;
+  } catch (_) {}
+  function setView(v){
+    view = v === "grid" ? "grid" : "list";
+    viewBtn.textContent = "view: " + view;
+    try { localStorage.setItem(VKEY, view); } catch (_) {}
+    render();
+  }
+  viewBtn.addEventListener("click", () => setView(view === "grid" ? "list" : "grid"));
+
+  /* randomizer — unwatched only */
+  const randomBtn = document.getElementById("randomBtn");
+  const pickOut = document.getElementById("pickOut");
+
+  randomBtn.addEventListener("click", () => {
+    let pool = FILMS.filter(f => !watched.has(f.id));
+    if(pool.length > 1 && picked) pool = pool.filter(f => f.id !== picked.id);
+    if(!pool.length){
+      pickOut.textContent = watched.size === FILMS.length
+        ? "Everything on the list is watched."
+        : "Nothing left to pick.";
+      return;
+    }
+    picked = pool[Math.floor(Math.random() * pool.length)];
+
+    list.querySelectorAll(".film.is-picked").forEach(el => el.classList.remove("is-picked"));
+    const row = list.querySelector('.film[data-id="' + picked.id + '"]');
+    if(row) row.classList.add("is-picked");
+    pickOut.innerHTML = 'Tonight: <a class="pick__link" href="#row-' + picked.id + '">' + esc(picked.title) + "</a> (" + picked.year + ")";
+  });
+
+  pickOut.addEventListener("click", e => {
+    const link = e.target.closest(".pick__link");
+    if(!link || !picked) return;
+    const row = list.querySelector('.film[data-id="' + picked.id + '"]');
+    if(!row) return;
+    e.preventDefault();
+    if(row.hidden){
+      state = "all";
+      filters.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.state === "all")));
+      q.value = ""; term = "";
+      apply();
+    }
+    row.classList.add("is-picked");
+    row.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+
+  setView(view);
+})();
+</script>
+</body>
+</html>
